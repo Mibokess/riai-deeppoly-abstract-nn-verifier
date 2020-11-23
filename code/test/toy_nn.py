@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from analyze.deeppoly.analyzer import DeepPoly
+from analyze.deeppoly.transform.relu.heuristic import Zero
 import unittest
 import numpy as np
 
@@ -52,7 +53,7 @@ class ToyNNsTestCase(unittest.TestCase):
         """
             Verifying toy NN of the RIAI course, exercise sheet 07 Problem 2
         """
-        dp = DeepPoly(save_intermediate_steps=True)
+        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=Zero())
         res, ads, steps = \
             dp.verify(ToyNNEx07(), torch.zeros((2, 1)), 1, 0, domain_bounds=[0, 1], robustness_fn=torch.greater_equal)
 
@@ -67,7 +68,7 @@ class ToyNNsTestCase(unittest.TestCase):
         """
             Verifying toy NN of the RIAI course - lecture 7 deeppoly slides 8
         """
-        dp = DeepPoly(save_intermediate_steps=True)
+        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=Zero())
         res, ads, steps = dp.verify(ToyNNCourse(), torch.zeros((2, 1)), 1, 0, domain_bounds=[-1, 1])
 
         expected_lower_bounds = [[-1, -1], [-2, -2], [0, 0], [-0.5, -2], [0, 0], [0.5, 0], [0.5]]

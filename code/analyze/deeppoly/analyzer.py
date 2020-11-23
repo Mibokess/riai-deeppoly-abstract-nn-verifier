@@ -2,7 +2,7 @@ import torch
 import networks
 from analyze import Analyzer
 from analyze.deeppoly.transform.factory import TransformerFactory
-from analyze.deeppoly.transform.relu.heuristic import HeuristicFactory
+from analyze.deeppoly.transform.relu.heuristic import MinimizeArea
 from analyze.deeppoly.domain import AbstractDomain
 import numpy as np
 import time
@@ -11,28 +11,28 @@ import time
 
 class DeepPoly(Analyzer):
 
-    def __init__(self, relu_heuristics=None, save_intermediate_steps=False, timeout=180):
+    def __init__(self, relu_heuristics=MinimizeArea(), save_intermediate_steps=False, timeout=180):
         self._save_intermediate_steps = save_intermediate_steps
-        self._relu_heuristic = relu_heuristics
+        self._heuristic = relu_heuristics
         self._timeout = timeout
 
 
     def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater):
         ini = AbstractDomain.create(inputs, eps, domain_bounds=domain_bounds)
-        heuristic = HeuristicFactory.create(self._relu_heuristic, net, inputs)
+        self._heuristic.init(net, inputs)
 
         transformers = []
         for layer in net.layers:
-            transformer = TransformerFactory.create(layer, heuristic)
+            transformer = TransformerFactory.create(layer, self._heuristic)
             transformers.append(transformer)
 
         transformer = self.create_final_transformer(layer.out_features, true_label)
         transformers.append(transformer)
 
-        return self._run(heuristic, transformers, ini, robustness_fn)
+        return self._run(transformers, ini, robustness_fn)
 
 
-    def _run(self, heuristic, transformers, ad_input, robustness_fn):
+    def _run(self, transformers, ad_input, robustness_fn):
         verified = False
         done = False
         timeout = False
@@ -41,7 +41,7 @@ class DeepPoly(Analyzer):
             verified, ads, steps = self._forward(transformers, ad_input, robustness_fn)
             lower_bounds = ads[-1].lower_bounds
             if not verified:
-                done = heuristic.is_done(lower_bounds)
+                done = not self._heuristic.next(lower_bounds)
             timeout = (time.time() - start_time) > self._timeout
 
         return verified, ads, steps

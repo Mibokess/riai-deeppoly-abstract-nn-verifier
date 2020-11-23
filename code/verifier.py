@@ -1,15 +1,16 @@
 import argparse
 import torch
 from networks import FullyConnected, Conv
-from analyze.deeppoly.transform.relu.heuristic import MinimizeArea, Zero, Random
+import analyze.deeppoly.transform.relu.heuristic as h
+import numpy as np
 DEVICE = 'cpu'
 INPUT_SIZE = 28
 
 
 def analyze(net, inputs, eps, true_label):
     from analyze.deeppoly import analyzer
-    # return analyzer.Sound().verify(net, inputs, eps, true_label)
-    dp = analyzer.DeepPoly(relu_heuristics=MinimizeArea)
+    relu_heuristic = h.Ensemble(h.MinimizeArea(), h.Zonotope(), h.Constant(np.linspace(0, 1, 10)))
+    dp = analyzer.DeepPoly(relu_heuristics=relu_heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)
     return res
 

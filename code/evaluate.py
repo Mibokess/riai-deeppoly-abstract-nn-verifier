@@ -49,15 +49,17 @@ class Evaluator:
                 gt = o.ground_truth(net, test)
                 sound = False if (gt == "not verified") and (out == "verified") else sound
                 max_score = max_score + 1 if gt == "verified" else max_score
+                point = 0
                 if out == gt:
                     status = "OK"
-                    score = score + 1 if gt == "verified" else score
+                    point = 1 if gt == "verified" else 0
                 elif gt == "not verified":
                     status = "KO - NOT SOUND!"
-                    score -= 2
+                    point = -2
                 else:
                     status = "FAILED"
-                print(f"- test {test_name}: {status}  (expecting '{gt}' got '{out}')")
+                print(f"- test {test_name}: {status}  ({point} point - expecting '{gt}' got '{out}')")
+                score += point
                 correct += (gt == out)
                 total += 1
 
