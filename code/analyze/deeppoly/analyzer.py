@@ -71,7 +71,7 @@ class DeepPoly(Analyzer):
 
             if not verified and self._check_intersect:
                 ad_last = ads[-1]
-                ad_intersect = ad_last if ad_intersect is None else ad_intersect.intersection(ad_intersect)
+                ad_intersect = ad_last if ad_intersect is None else ad_intersect.intersection(ad_last)
                 verified, robustness_ad_intersect = robustness.verify(ads[:-1] + [ad_intersect]) if not verified else verified
 
             if not verified:
