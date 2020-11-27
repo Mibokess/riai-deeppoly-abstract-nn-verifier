@@ -54,33 +54,38 @@ class Constant(Heuristic):
         """
         :param a list of values for lambda
         """
-        self._c = constants
-        self._i = 0
+        self.__c = constants
+        self.__i = 0
 
     def init(self, net, inputs):
-        self._i = 0
+        self.__i = 0
 
     def next(self, final_lower_bounds):
-        self._i += 1
-        return self._i < len(self._c)
+        self.__i += 1
+        return self.__i < len(self.__c)
 
     def compute_lambda(self, lower_bounds, upper_bounds):
-        return torch.ones_like(lower_bounds) * self._c[self._i]
+        lambda_low = self.__c[self.__i]
+        return torch.ones_like(lower_bounds) * lambda_low
 
 
 class Ensemble(Heuristic):
     
     def __init__(self, *heuristics):
         self._heuristics = list(heuristics)
-        self._i = 0
+        self.__i = 0
 
     def init(self, net, inputs):
-        self._i = 0
+        for h in self._heuristics:
+            h.init(net, inputs)
+        self.__i = 0
 
     def next(self, lower_bounds):
-        self._i += 1
-        return self._i < len(self._heuristics)
+        if not self._heuristics[self.__i].next(lower_bounds):
+            self.__i += 1
+            return self.__i < len(self._heuristics)
+        return True
 
     def compute_lambda(self, lower_bounds, upper_bounds):
-        return self._heuristics[self._i].compute_lambda(lower_bounds, upper_bounds)
+        return self._heuristics[self.__i].compute_lambda(lower_bounds, upper_bounds)
 
