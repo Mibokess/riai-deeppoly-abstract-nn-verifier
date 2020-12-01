@@ -33,6 +33,9 @@ class Evaluator:
     def test_fc(self):
         self._test(list(filter(lambda n: n.startswith("fc"), self.nns)))
 
+    def test_conv2d(self):
+        self._test(list(filter(lambda n: n.startswith("conv"), self.nns)))
+
     def _test(self, nns):
         o = Oracle()
         total = 0
@@ -75,4 +78,5 @@ class Evaluator:
 if __name__ == '__main__':
     e = Evaluator()
     e.test_fc()
+    # e.test_conv2d()
     #e.test_all()

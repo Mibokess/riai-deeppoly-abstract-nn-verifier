@@ -1,4 +1,4 @@
-from analyze.deeppoly.transform.affine import AffineTransformer
+from analyze.deeppoly.transform.affine import AffineTransformer, LinearTransformer, Conv2dTransformer
 from analyze.deeppoly.transform.preprocess import NormalizeTransformer, FlattenTransformer
 from analyze.deeppoly.transform.relu import ReluTransformer
 
@@ -15,7 +15,9 @@ class TransformerFactory:
         if type(layer) is torch.nn.modules.flatten.Flatten:
             return FlattenTransformer()
         if type(layer) is torch.nn.modules.linear.Linear:
-            return AffineTransformer(layer)
+            return LinearTransformer(layer)
+        if type(layer) is torch.nn.modules.conv.Conv2d:
+            return Conv2dTransformer(layer)
         if type(layer) is torch.nn.modules.activation.ReLU:
             return ReluTransformer(heuristic)
         raise ValueError(f"unknown layer type {type(layer)}")

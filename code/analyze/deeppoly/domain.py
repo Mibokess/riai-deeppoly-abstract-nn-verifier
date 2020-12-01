@@ -121,3 +121,16 @@ class AbstractDomain:
         return AbstractDomain(lb, ub, lrc, urc)
 
 
+    def intersection(self, ad):
+        # TODO
+        inter = self.clone()
+        lower = (self.lower_bounds < ad.lower_bounds).flatten()
+        inter.lower_bounds[lower] = ad.lower_bounds[lower]
+        inter.lower_than.A[lower, :] = inter.lower_than.A[lower, :]
+        inter.lower_than.v[lower, :] = inter.lower_than.v[lower, :]
+        upper = (self.upper_bounds > ad.upper_bounds).flatten()
+        inter.upper_bounds[upper] = ad.upper_bounds[upper]
+        inter.greater_than.A[upper, :] = inter.greater_than.A[upper, :]
+        inter.greater_than.v[upper, :] = inter.greater_than.v[upper, :]
+        return inter
+
