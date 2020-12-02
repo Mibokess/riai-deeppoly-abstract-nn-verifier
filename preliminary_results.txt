@@ -1,0 +1,28 @@
+net,test case,ground truth,your output,your runtime,your point
+fc1,anonymous,not verified,not verified,0.781,0
+fc1,img9_0.00900.txt,verified,verified,0.832,1
+fc2,img3_0.10400.txt,verified,not verified,3.563,0
+fc2,anonymous,not verified,not verified,1.958,0
+fc3,anonymous,verified,not verified,3.519,0
+fc3,img8_0.06300.txt,verified,not verified,3.497,0
+fc4,anonymous,not verified,not verified,1.63,0
+fc4,img8_0.04010.txt,verified,verified,0.862,1
+fc5,img3_0.11100.txt,verified,not verified,1.155,0
+fc5,anonymous,not verified,not verified,1.457,0
+fc6,anonymous,not verified,not verified,3.905,0
+fc6,anonymous,not verified,not verified,3.978,0
+fc6,img7_0.03140.txt,verified,not verified,3.344,0
+fc7,anonymous,not verified,verified,1.1,-2
+fc7,img6_0.14400.txt,verified,verified,2.48,1
+fc7,anonymous,verified,verified,0.989,1
+conv1,img1_0.11900.txt,verified,crashed (not verified),0.702,0
+conv1,anonymous,verified,crashed (not verified),0.698,0
+conv1,anonymous,verified,crashed (not verified),0.613,0
+conv2,anonymous,verified,crashed (not verified),0.585,0
+conv2,img6_0.15900.txt,verified,crashed (not verified),0.575,0
+conv2,anonymous,verified,crashed (not verified),0.684,0
+conv3,img0_0.16400.txt,verified,crashed (not verified),0.702,0
+conv3,anonymous,not verified,crashed (not verified),0.722,0
+conv3,anonymous,not verified,crashed (not verified),0.715,0
+
+total points: 2
