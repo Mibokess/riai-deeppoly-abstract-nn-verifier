@@ -86,7 +86,7 @@ class ToyNNsTestCase(unittest.TestCase):
         """
             Verifying toy NN of the RIAI course - lecture 7 deeppoly slides 8
         """
-        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=MinimizeArea())
+        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=Zero())
         res, ads, steps = dp.verify(ToyNNCourse(), torch.zeros((2, 1)), 1, 0, domain_bounds=[-1, 1])
 
         expected_lower_bounds = [[-1, -1], [-2, -2], [0, 0], [-0.5, -2], [0, 0], [0.5, 0], [0.5]]
@@ -95,18 +95,28 @@ class ToyNNsTestCase(unittest.TestCase):
         self.assertTrue(res, "could not verify property x11 - x12 > 0")
         self._check(expected_lower_bounds, expected_upper_bounds, ads, steps)
 
+
     def test_paper_deepoly(self):
         """
-            Verifying toy NN of the RIAI course - lecture 7 deeppoly slides 8
+            Verifying toy NN of the Deep poly paper page 41:5
+
+            seems there is in the paper an error in the computation of the upper bound u11:
+            we have using back-substitution:
+            x10 <= 1/4*(x1+x2) + 1.5
+            x9 <= x1 + 2
+            => x11 = x10 + x9 + 1 <= 5/4*x1 + 1/4*x2 + 4.5
+            => u11 = 5/4 + 1/4 + 4.5 = 3/2 + 4.5 = 6.0
+            and not 5.5 as specified.
         """
-        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=MinimizeArea())
+        dp = DeepPoly(save_intermediate_steps=True, relu_heuristics=Zero())
         res, ads, steps = dp.verify(ToyNNPaper(), torch.zeros((2, 1)), 1, 0, domain_bounds=[-1, 1])
 
         expected_lower_bounds = [[-1, -1], [-2, -2], [0, 0], [0, -2], [0, 0], [1.0, 0], [1]]
-        expected_upper_bounds = [[1, 1], [2, 2], [2, 2], [3, 2.0], [3, 2], [5.5, 2], None]
+        expected_upper_bounds = [[1, 1], [2, 2], [2, 2], [3, 2.0], [3, 2], [6, 2], None]
 
         self.assertTrue(res, "could not verify property x11 - x12 > 0")
         self._check(expected_lower_bounds, expected_upper_bounds, ads, steps)
+
 
     def _check(self, expected_lower_bounds, expected_upper_bounds, ads, steps):
         for i, ad in enumerate(ads):
@@ -123,8 +133,6 @@ class ToyNNsTestCase(unittest.TestCase):
                         f"{what} bounds for layer {step} are not correct (expecting {exp} got {got})")
 
 
-
 if __name__ == "__main__":
     unittest.main()
-
 
