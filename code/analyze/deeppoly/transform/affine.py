@@ -19,19 +19,21 @@ class AffineTransformer(Transformer):
             self.bias = torch.zeros((layer.out_features, 1))
         self.N = layer.out_features
 
-
-    def _transform(self, ad, input):
+    def _transform(self, ad, input, ads=None):
 
         A_gt = torch.matmul(self.weights_pos, ad.greater_than.A) + torch.matmul(self.weights_neg, ad.lower_than.A)
         v_gt = self.bias + torch.matmul(self.weights_pos, ad.greater_than.v) + torch.matmul(self.weights_neg, ad.lower_than.v)
-        gt = GreaterThanConstraints(A_gt, v_gt)
+        gt = GreaterThanConstraints(A_gt, v_gt, self.weights.T, self.bias.T)
 
         A_lt = torch.matmul(self.weights_pos, ad.lower_than.A) + torch.matmul(self.weights_neg, ad.greater_than.A)
         v_lt = self.bias + torch.matmul(self.weights_pos, ad.lower_than.v) + torch.matmul(self.weights_neg, ad.greater_than.v)
-        lt = LowerThanConstraints(A_lt, v_lt)
+        lt = LowerThanConstraints(A_lt, v_lt, self.weights.T, self.bias.T)
 
-        upper_bound = gt.compute_bounds(input.lower_bounds, input.upper_bounds)
-        lower_bound = lt.compute_bounds(input.lower_bounds, input.upper_bounds)
+        upper_bound = gt.compute_bounds_backprop(ad, ads)
+        lower_bound = lt.compute_bounds_backprop(ad, ads)
+
+        #upper_bound = gt.compute_bounds(input.lower_bounds, input.upper_bounds)
+        #lower_bound = lt.compute_bounds(input.lower_bounds, input.upper_bounds)
 
         ad_lin = AbstractDomain(lower_bound, upper_bound, lt, gt)
         return ad_lin

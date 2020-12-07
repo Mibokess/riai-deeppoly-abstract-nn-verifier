@@ -6,7 +6,7 @@ class ReluTransformer(Transformer):
     def __init__(self, heuristic):
         self._heuristic = heuristic
 
-    def _transform(self, ad, input):
+    def _transform(self, ad, input, ads=None):
 
         ad_relu = ad.clone()
 
@@ -32,6 +32,9 @@ class ReluTransformer(Transformer):
         ad_relu.greater_than.v[relu_mask] *= lambda_up
         ad_relu.greater_than.v[relu_mask] += c_up
 
+        ad_relu.greater_than.A_no_sub[relu_mask, :] = lambda_up
+        ad_relu.greater_than.v_no_sub.T[relu_mask] = c_up
+
         # 3.2 for the lower bound, the heuristic..
         # x^L_j >= lambda * x^(L-1)_j
 
@@ -39,8 +42,14 @@ class ReluTransformer(Transformer):
         ad_relu.lower_than.A[relu_mask, :] *= lambda_low
         ad_relu.lower_than.v[relu_mask] *= lambda_low
 
-        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
-        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        ad_relu.lower_than.A_no_sub[relu_mask, :] = lambda_low
+        ad_relu.lower_than.v_no_sub.T[relu_mask] = lambda_low
+
+        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds_backprop(ad, ads)
+        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds_backprop(ad, ads)
+
+        #ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        #ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
 
         return ad_relu
 

@@ -9,10 +9,10 @@ class Transformer(ABC):
     def transform(self, abstract_domains):
         d0 = AbstractDomain.last_preprocessing_step(abstract_domains)
         d = abstract_domains[-1].init()
-        return self._transform(d, d0)
+        return self._transform(d, d0, abstract_domains)
 
     @abstractmethod
-    def _transform(self, ad, input):
+    def _transform(self, ad, input, ads=None):
         pass
 
 
