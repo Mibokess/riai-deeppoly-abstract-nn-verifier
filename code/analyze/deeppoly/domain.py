@@ -43,7 +43,7 @@ class GreaterThanConstraints(RelationalConstraints):
     def compute_bounds_backprop(self, ad, ads):
         upper_bounds = []
 
-        for i, node_vals in enumerate(self.A_no_sub):
+        for i, node_vals in enumerate(self.A_no_sub.T):
             upper_bounds.append([sum(self.backprop_layer(node_vals, ad, ads)) + self.v_no_sub.T[i]])
 
         return torch.tensor(upper_bounds)
@@ -54,8 +54,8 @@ class GreaterThanConstraints(RelationalConstraints):
         if len(ads) == 1:
             return torch.matmul(initial_pos, ads[-1].upper_bounds) + torch.matmul(initial_neg, ads[-1].lower_bounds)
 
-        layer_prop_A = torch.matmul(ad.greater_than.A_no_sub, initial_pos) + torch.matmul(ad.lower_than.A_no_sub, initial_neg)
-        layer_prop_v = torch.matmul(ad.greater_than.v_no_sub, initial_pos) + torch.matmul(ad.lower_than.v_no_sub, initial_neg)
+        layer_prop_A = torch.matmul(ads[-1].greater_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].lower_than.A_no_sub, initial_neg)
+        layer_prop_v = torch.matmul(ads[-1].greater_than.v_no_sub, initial_pos) + torch.matmul(ads[-1].lower_than.v_no_sub, initial_neg)
 
         return self.backprop_layer(layer_prop_A, ads[-1], ads[:-1]) + layer_prop_v
 
@@ -92,10 +92,8 @@ class LowerThanConstraints(RelationalConstraints):
         if len(ads) == 1:
             return torch.matmul(initial_pos, ads[-1].lower_bounds) + torch.matmul(initial_neg, ads[-1].upper_bounds)
 
-        layer_prop_A = torch.matmul(ad.lower_than.A_no_sub, initial_pos) + torch.matmul(ad.greater_than.A_no_sub,
-                                                                                          initial_neg)
-        layer_prop_v = torch.matmul(ad.lower_than.v_no_sub, initial_pos) + torch.matmul(ad.greater_than.v_no_sub,
-                                                                                          initial_neg)
+        layer_prop_A = torch.matmul(ads[-1].lower_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].greater_than.A_no_sub, initial_neg)
+        layer_prop_v = torch.matmul(ads[-1].lower_than.v_no_sub, initial_pos) + torch.matmul(ads[-1].greater_than.v_no_sub, initial_neg)
 
         return self.backprop_layer(layer_prop_A, ads[-1], ads[:-1]) + layer_prop_v
 

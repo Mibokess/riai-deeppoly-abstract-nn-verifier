@@ -1,4 +1,5 @@
 from analyze.deeppoly.transform import Transformer
+import torch
 
 
 class ReluTransformer(Transformer):
@@ -32,7 +33,10 @@ class ReluTransformer(Transformer):
         ad_relu.greater_than.v[relu_mask] *= lambda_up
         ad_relu.greater_than.v[relu_mask] += c_up
 
-        ad_relu.greater_than.A_no_sub[relu_mask, :] = lambda_up
+        ad_relu.greater_than.A_no_sub = torch.eye(len(relu_mask))
+        ad_relu.greater_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask)) * lambda_up)[relu_mask, :]
+
+        ad_relu.greater_than.v_no_sub = torch.zeros(ad_relu.greater_than.v_no_sub.shape)
         ad_relu.greater_than.v_no_sub.T[relu_mask] = c_up
 
         # 3.2 for the lower bound, the heuristic..
@@ -42,11 +46,14 @@ class ReluTransformer(Transformer):
         ad_relu.lower_than.A[relu_mask, :] *= lambda_low
         ad_relu.lower_than.v[relu_mask] *= lambda_low
 
-        ad_relu.lower_than.A_no_sub[relu_mask, :] = lambda_low
+        ad_relu.lower_than.A_no_sub = torch.eye(len(relu_mask))
+        ad_relu.lower_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask)) * lambda_low)[relu_mask, :]
+
+        ad_relu.lower_than.v_no_sub = torch.zeros(ad_relu.lower_than.v_no_sub.shape)
         ad_relu.lower_than.v_no_sub.T[relu_mask] = lambda_low
 
-        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds_backprop(ad, ads)
-        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds_backprop(ad, ads)
+        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds_backprop(ad_relu, ads)
+        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds_backprop(ad_relu, ads)
 
         #ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
         #ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
