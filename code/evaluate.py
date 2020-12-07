@@ -20,7 +20,7 @@ class Oracle:
 class Evaluator:
 
     def __init__(self, test_folders):
-        self.nns = map(lambda f: os.path.splitext(os.path.basename(f))[0], os.listdir("../mnist_nets"))
+        self.nns = sorted(map(lambda f: os.path.splitext(os.path.basename(f))[0], os.listdir("../mnist_nets")))
         self._test_folders = test_folders
         self._oracles = dict((folder, Oracle(folder)) for folder in test_folders)
 

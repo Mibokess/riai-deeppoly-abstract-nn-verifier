@@ -9,13 +9,13 @@ import torch
 class TransformerFactory:
 
     @staticmethod
-    def create(layer, heuristic=None):
+    def create(layer, heuristic=None, backprop=False):
         if type(layer) is networks.Normalization:
             return NormalizeTransformer(layer)
         if type(layer) is torch.nn.modules.flatten.Flatten:
             return FlattenTransformer()
         if type(layer) is torch.nn.modules.linear.Linear:
-            return LinearTransformer(layer)
+            return LinearTransformer(layer, backprop)
         if type(layer) is torch.nn.modules.conv.Conv2d:
             return Conv2dTransformer(layer)
         if type(layer) is torch.nn.modules.activation.ReLU:

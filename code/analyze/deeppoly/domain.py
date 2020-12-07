@@ -51,7 +51,7 @@ class GreaterThanConstraints(RelationalConstraints):
     def backprop_layer(self, initial, ad, ads):
         initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
 
-        if len(ads) == 1:
+        if len(ads) == 1 or not ads[-1].greater_than:
             return torch.matmul(initial_pos, ads[-1].upper_bounds) + torch.matmul(initial_neg, ads[-1].lower_bounds)
 
         layer_prop_A = torch.matmul(ads[-1].greater_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].lower_than.A_no_sub, initial_neg)
@@ -89,7 +89,7 @@ class LowerThanConstraints(RelationalConstraints):
     def backprop_layer(self, initial, ad, ads):
         initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
 
-        if len(ads) == 1:
+        if len(ads) == 1 or not ads[-1].lower_than:
             return torch.matmul(initial_pos, ads[-1].lower_bounds) + torch.matmul(initial_neg, ads[-1].upper_bounds)
 
         layer_prop_A = torch.matmul(ads[-1].lower_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].greater_than.A_no_sub, initial_neg)

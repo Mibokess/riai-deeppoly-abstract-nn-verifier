@@ -52,11 +52,12 @@ class ReluTransformer(Transformer):
         ad_relu.lower_than.v_no_sub = torch.zeros(ad_relu.lower_than.v_no_sub.shape)
         ad_relu.lower_than.v_no_sub.T[relu_mask] = lambda_low
 
-        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds_backprop(ad_relu, ads)
-        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds_backprop(ad_relu, ads)
-
-        #ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
-        #ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        #if backprop:
+        #    ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds_backprop(ad_relu, ads)
+        #    ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds_backprop(ad_relu, ads)
+        #else:
+        ad_relu.lower_bounds = ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
 
         return ad_relu
 

@@ -4,6 +4,7 @@ from analyze import Analyzer
 from analyze.deeppoly.transform.factory import TransformerFactory
 from analyze.deeppoly.transform.relu.heuristic import MinimizeArea
 from analyze.deeppoly.domain import AbstractDomain
+from torch.nn.modules.activation import ReLU
 import numpy as np
 import time
 
@@ -49,8 +50,10 @@ class DeepPoly(Analyzer):
         self._heuristic.init(net, inputs)
 
         transformers = []
-        for layer in net.layers:
-            transformer = TransformerFactory.create(layer, self._heuristic)
+        for i, layer in enumerate(net.layers):
+            backprop = i > 0 and isinstance(net.layers[i - 1], ReLU)
+
+            transformer = TransformerFactory.create(layer, self._heuristic, backprop)
             transformers.append(transformer)
 
         robustness = RobustnessProperty(layer.out_features, true_label, robustness_fn)
