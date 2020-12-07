@@ -34,7 +34,7 @@ class ReluTransformer(Transformer):
         ad_relu.greater_than.v[relu_mask] += c_up
 
         ad_relu.greater_than.A_no_sub = torch.eye(len(relu_mask))
-        ad_relu.greater_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask)) * lambda_up)[relu_mask, :]
+        ad_relu.greater_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask))[relu_mask] * lambda_up)
 
         ad_relu.greater_than.v_no_sub = torch.zeros(ad_relu.greater_than.v_no_sub.shape)
         ad_relu.greater_than.v_no_sub.T[relu_mask] = c_up
@@ -47,7 +47,7 @@ class ReluTransformer(Transformer):
         ad_relu.lower_than.v[relu_mask] *= lambda_low
 
         ad_relu.lower_than.A_no_sub = torch.eye(len(relu_mask))
-        ad_relu.lower_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask)) * lambda_low)[relu_mask, :]
+        ad_relu.lower_than.A_no_sub[relu_mask, :] = (torch.eye(len(relu_mask))[relu_mask] * lambda_low)
 
         ad_relu.lower_than.v_no_sub = torch.zeros(ad_relu.lower_than.v_no_sub.shape)
         ad_relu.lower_than.v_no_sub.T[relu_mask] = lambda_low
