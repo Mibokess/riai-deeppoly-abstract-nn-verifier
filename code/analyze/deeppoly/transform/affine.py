@@ -26,12 +26,12 @@ class LinearTransformer(Transformer):
         greater_than = GreaterThanConstraints(self.weights, self.bias)
         lower_than = LowerThanConstraints(self.weights, self.bias)
 
-        if self.backprop:
+        if True or self.backprop:
             lower_bounds, upper_bounds = self.compute_bounds(ads, lower_than, greater_than)
         else:
             ad = ads[-1]
             upper_bounds = greater_than.compute_bounds(ad.lower_bounds, ad.upper_bounds)
-            lower_bounds = greater_than.compute_bounds(ad.lower_bounds, ad.upper_bounds)
+            lower_bounds = lower_than.compute_bounds(ad.lower_bounds, ad.upper_bounds)
 
         ad_lin = AbstractDomain(lower_bounds, upper_bounds, lower_than, greater_than)
         return ad_lin
