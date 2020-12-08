@@ -17,9 +17,14 @@ class RobustnessProperty:
         self._transformer = self._create_transformer(nb_features, true_label)
 
     def verify(self, ads):
-        ad = self._transformer.transform(ads)
-        verified = torch.all(self._compare(ad.lower_bounds, 0))
+        ads = self._transformer.transform(ads)
+        ad = ads[-1]
+        verified = self.verify_bounds(ad.lower_bounds)
         return verified, ad
+
+    def verify_bounds(self, lower_bounds):
+        verified = torch.all(self._compare(lower_bounds, 0))
+        return verified
 
     @staticmethod
     def _create_transformer(nb_labels, true_label):
@@ -36,10 +41,8 @@ class DeepPoly(Analyzer):
 
     def __init__(self,
                  relu_heuristics=MinimizeArea(),
-                 check_domain_intersect=True,
-                 save_intermediate_steps=False,
+                 check_domain_intersect=False,
                  timeout=180):
-        self._save_intermediate_steps = save_intermediate_steps
         self._heuristic = relu_heuristics
         self._timeout = timeout
         self._check_intersect = check_domain_intersect
@@ -52,7 +55,6 @@ class DeepPoly(Analyzer):
         transformers = []
         for i, layer in enumerate(net.layers):
             backprop = i > 0 and isinstance(net.layers[i - 1], ReLU)
-
             transformer = TransformerFactory.create(layer, self._heuristic, backprop)
             transformers.append(transformer)
 
@@ -73,9 +75,8 @@ class DeepPoly(Analyzer):
             verified, robustness_ad = robustness.verify(ads)
 
             if not verified and self._check_intersect:
-                ad_last = ads[-1]
-                ad_intersect = ad_last if ad_intersect is None else ad_intersect.intersection(ad_last)
-                verified, robustness_ad_intersect = robustness.verify(ads[:-1] + [ad_intersect]) if not verified else verified
+                ad_intersect = robustness_ad if ad_intersect is None else ad_intersect.intersection(robustness_ad)
+                verified = robustness.verify_bounds(ad_intersect.lower_bounds) if not verified else verified
 
             if not verified:
                 done = not self._heuristic.next(robustness_ad.lower_bounds)
@@ -85,22 +86,13 @@ class DeepPoly(Analyzer):
         return verified, ads, steps
 
 
+
     def _forward(self, transformers, ad_input):
         ads = [ad_input]
         steps = ["input"]
         for transformer in transformers:
-            ad = transformer.transform(ads)
-            if self._save_intermediate_steps:
-                ads.append(ad)
-            else:
-                if not ad.has_constraints():
-                    ini = ad
-                    ads = [ad]
-                else:
-                    ads = [ini, ad]
+            ads = transformer.transform(ads)
             steps.append(transformer.__class__.__name__)
 
         return ads, steps
-
-
 

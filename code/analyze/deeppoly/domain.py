@@ -13,15 +13,8 @@ class RelationalConstraints(ABC):
     A: torch.Tensor
     v: torch.Tensor
 
-    A_no_sub: torch.Tensor
-    v_no_sub: torch.Tensor
-
     @abstractmethod
     def compute_bounds(self, lower_bounds, upper_bounds):
-        pass
-
-    @abstractmethod
-    def compute_bounds_backprop(self, ad, ads):
         pass
 
 
@@ -29,38 +22,20 @@ class RelationalConstraints(ABC):
 class GreaterThanConstraints(RelationalConstraints):
     """
         Describes "greater than" relational constraints.
-        i.e. the constraints for the N nodes at layer L are given by A_{>} * x^0 + c^L  >= x^L
+        i.e. the constraints for the N nodes at layer L are given by A_{>} * x^{L-1} + c^L  >= x^L
     """
 
     def compute_bounds(self, input_lower_bounds, input_upper_bounds):
         """ Returns the UPPER bounds for the N nodes x_i in the layer L
             i.e. l={l_i, i=1,..,N}, such that x^L_i <= l_i
         """
+
         A_pos, A_neg = TensorUtils.split_positive_negative(self.A)
         upper_bounds = torch.matmul(A_pos, input_upper_bounds) + torch.matmul(A_neg, input_lower_bounds) + self.v
         return upper_bounds
 
-    def compute_bounds_backprop(self, ad, ads):
-        upper_bounds = []
-
-        for i, node_vals in enumerate(self.A_no_sub.T):
-            upper_bounds.append([sum(self.backprop_layer(node_vals, ad, ads)) + self.v_no_sub.T[i]])
-
-        return torch.tensor(upper_bounds)
-
-    def backprop_layer(self, initial, ad, ads):
-        initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
-
-        if len(ads) == 1 or not ads[-1].greater_than:
-            return torch.matmul(initial_pos, ads[-1].upper_bounds) + torch.matmul(initial_neg, ads[-1].lower_bounds)
-
-        layer_prop_A = torch.matmul(ads[-1].greater_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].lower_than.A_no_sub, initial_neg)
-        layer_prop_v = torch.matmul(ads[-1].greater_than.v_no_sub, initial_pos) + torch.matmul(ads[-1].lower_than.v_no_sub, initial_neg)
-
-        return self.backprop_layer(layer_prop_A, ads[-1], ads[:-1]) + layer_prop_v
-
     def clone(self):
-        return GreaterThanConstraints(self.A.clone(), self.v.clone(), self.A_no_sub.clone(), self.v_no_sub.clone())
+        return GreaterThanConstraints(self.A.clone(), self.v.clone())
 
 
 
@@ -78,27 +53,8 @@ class LowerThanConstraints(RelationalConstraints):
         lower_bounds = torch.matmul(A_pos, input_lower_bounds) + torch.matmul(A_neg, input_upper_bounds) + self.v
         return lower_bounds
 
-    def compute_bounds_backprop(self, ad, ads):
-        lower_bounds = []
-
-        for i, node_vals in enumerate(self.A_no_sub.T):
-            lower_bounds.append([sum(self.backprop_layer(node_vals, ad, ads)) + self.v_no_sub.T[i]])
-
-        return torch.tensor(lower_bounds)
-
-    def backprop_layer(self, initial, ad, ads):
-        initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
-
-        if len(ads) == 1 or not ads[-1].lower_than:
-            return torch.matmul(initial_pos, ads[-1].lower_bounds) + torch.matmul(initial_neg, ads[-1].upper_bounds)
-
-        layer_prop_A = torch.matmul(ads[-1].lower_than.A_no_sub, initial_pos) + torch.matmul(ads[-1].greater_than.A_no_sub, initial_neg)
-        layer_prop_v = torch.matmul(ads[-1].lower_than.v_no_sub, initial_pos) + torch.matmul(ads[-1].greater_than.v_no_sub, initial_neg)
-
-        return self.backprop_layer(layer_prop_A, ads[-1], ads[:-1]) + layer_prop_v
-
     def clone(self):
-        return LowerThanConstraints(self.A.clone(), self.v.clone(), self.A_no_sub.clone(), self.v_no_sub.clone())
+        return LowerThanConstraints(self.A.clone(), self.v.clone())
 
 
 
@@ -107,9 +63,9 @@ class AbstractDomain:
     """
         The abstract domain after layer L. For each node x^L_i in layer L, we have:
         - lower_bounds[i] <= x^L_i <= upper_bounds[i]
-        - x^L_i >= lower_than.A * x^0 + lower_than.v[i]
-        - x^L_i <= greater_than.A * x^0 + greater_than.v[i]
-          where x^0 are the nodes of the input layer (i.e. backsubstitution is performed at each step).
+        - x^L_i >= lower_than.A * x^{L-1} + lower_than.v[i]
+        - x^L_i <= greater_than.A * x^{L-1} + greater_than.v[i]
+          where x^{L-1} are the nodes of the previous layer
     """
     lower_bounds: torch.Tensor
     upper_bounds: torch.Tensor
@@ -152,8 +108,8 @@ class AbstractDomain:
         def idty():
             return torch.eye(len(self.lower_bounds))
 
-        lower_than = LowerThanConstraints(idty(), torch.zeros_like(self.lower_bounds), None, None)
-        greater_than = GreaterThanConstraints(idty(), torch.zeros_like(self.upper_bounds), None, None)
+        lower_than = LowerThanConstraints(idty(), torch.zeros_like(self.lower_bounds))
+        greater_than = GreaterThanConstraints(idty(), torch.zeros_like(self.upper_bounds))
 
         return AbstractDomain(self.lower_bounds, self.upper_bounds, lower_than, greater_than)
 
