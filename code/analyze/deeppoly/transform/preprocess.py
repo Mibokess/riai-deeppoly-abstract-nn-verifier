@@ -7,7 +7,7 @@ from analyze.deeppoly.transform import Transformer
 
 class Preprocessor(Transformer):
 
-    def _transform(self, ad, input):
+    def _transform(self, ad, input, ads=None):
         raise NotImplementedError()
 
 
