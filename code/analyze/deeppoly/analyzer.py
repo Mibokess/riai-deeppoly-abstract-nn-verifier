@@ -55,7 +55,6 @@ class DeepPoly(Analyzer):
         transformers = []
         for i, layer in enumerate(net.layers):
             backprop = i > 0 and isinstance(net.layers[i - 1], ReLU)
-
             transformer = TransformerFactory.create(layer, self._heuristic, backprop)
             transformers.append(transformer)
 
