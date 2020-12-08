@@ -7,9 +7,8 @@ from analyze.deeppoly.transform import Transformer
 
 class Preprocessor(Transformer):
 
-    def _transform(self, ad, input, ads=None):
+    def _transform(self, ads):
         raise NotImplementedError()
-
 
 
 class NormalizeTransformer(Preprocessor):
@@ -20,8 +19,7 @@ class NormalizeTransformer(Preprocessor):
         self._l = norm_layer
 
     def transform(self, abstract_domains):
-        return AbstractDomain.preprocess(abstract_domains[-1], self._l.forward)
-
+        return [AbstractDomain.preprocess(abstract_domains[-1], self._l.forward)]
 
 
 class FlattenTransformer(Preprocessor):
@@ -30,6 +28,10 @@ class FlattenTransformer(Preprocessor):
         def flatten(a):
             f = torch.flatten(a)
             return f.reshape(f.shape[0], 1)
-        return AbstractDomain.preprocess(abstract_domains[-1], flatten)
+        ad = AbstractDomain.preprocess(abstract_domains[-1], flatten)
+        if abstract_domains[-1].has_constraints():
+            # we are not in preprocessing step
+            return abstract_domains + [ad]
+        return [ad]
 
 

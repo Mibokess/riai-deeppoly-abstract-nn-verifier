@@ -29,13 +29,14 @@ class RelationalConstraints(ABC):
 class GreaterThanConstraints(RelationalConstraints):
     """
         Describes "greater than" relational constraints.
-        i.e. the constraints for the N nodes at layer L are given by A_{>} * x^0 + c^L  >= x^L
+        i.e. the constraints for the N nodes at layer L are given by A_{>} * x^{L-1} + c^L  >= x^L
     """
 
     def compute_bounds(self, input_lower_bounds, input_upper_bounds):
         """ Returns the UPPER bounds for the N nodes x_i in the layer L
             i.e. l={l_i, i=1,..,N}, such that x^L_i <= l_i
         """
+
         A_pos, A_neg = TensorUtils.split_positive_negative(self.A)
         upper_bounds = torch.matmul(A_pos, input_upper_bounds) + torch.matmul(A_neg, input_lower_bounds) + self.v
         return upper_bounds
@@ -107,9 +108,9 @@ class AbstractDomain:
     """
         The abstract domain after layer L. For each node x^L_i in layer L, we have:
         - lower_bounds[i] <= x^L_i <= upper_bounds[i]
-        - x^L_i >= lower_than.A * x^0 + lower_than.v[i]
-        - x^L_i <= greater_than.A * x^0 + greater_than.v[i]
-          where x^0 are the nodes of the input layer (i.e. backsubstitution is performed at each step).
+        - x^L_i >= lower_than.A * x^{L-1} + lower_than.v[i]
+        - x^L_i <= greater_than.A * x^{L-1} + greater_than.v[i]
+          where x^{L-1} are the nodes of the previous layer
     """
     lower_bounds: torch.Tensor
     upper_bounds: torch.Tensor
