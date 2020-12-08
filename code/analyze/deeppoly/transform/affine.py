@@ -7,7 +7,7 @@ from analyze.deeppoly.transform import Transformer
 from analyze.utils import TensorUtils
 
 
-class AffineTransformer(Transformer):
+class LinearTransformer(Transformer):
 
     def __init__(self, layer):
         w = layer.weight.detach()
@@ -20,31 +20,18 @@ class AffineTransformer(Transformer):
         self.N = layer.out_features
 
 
-    def _transform(self, ad, input):
+    def _transform(self, ads):
+        greater_than = GreaterThanConstraints(self.weights, self.bias)
+        lower_than = LowerThanConstraints(self.weights, self.bias)
 
-        A_gt = torch.matmul(self.weights_pos, ad.greater_than.A) + torch.matmul(self.weights_neg, ad.lower_than.A)
-        v_gt = self.bias + torch.matmul(self.weights_pos, ad.greater_than.v) + torch.matmul(self.weights_neg, ad.lower_than.v)
-        gt = GreaterThanConstraints(A_gt, v_gt)
+        lower_bounds, upper_bounds = self.compute_bounds(ads, lower_than, greater_than)
 
-        A_lt = torch.matmul(self.weights_pos, ad.lower_than.A) + torch.matmul(self.weights_neg, ad.greater_than.A)
-        v_lt = self.bias + torch.matmul(self.weights_pos, ad.lower_than.v) + torch.matmul(self.weights_neg, ad.greater_than.v)
-        lt = LowerThanConstraints(A_lt, v_lt)
-
-        upper_bound = gt.compute_bounds(input.lower_bounds, input.upper_bounds)
-        lower_bound = lt.compute_bounds(input.lower_bounds, input.upper_bounds)
-
-        ad_lin = AbstractDomain(lower_bound, upper_bound, lt, gt)
+        ad_lin = AbstractDomain(lower_bounds, upper_bounds, lower_than, greater_than)
         return ad_lin
 
 
-#TODO
 
-class LinearTransformer(AffineTransformer):
+
+class Conv2dTransformer(Transformer):
     pass
-
-
-class Conv2dTransformer(AffineTransformer):
-    pass
-
-
 

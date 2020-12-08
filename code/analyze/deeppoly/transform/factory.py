@@ -1,4 +1,4 @@
-from analyze.deeppoly.transform.affine import AffineTransformer, LinearTransformer, Conv2dTransformer
+from analyze.deeppoly.transform.affine import LinearTransformer, Conv2dTransformer
 from analyze.deeppoly.transform.preprocess import NormalizeTransformer, FlattenTransformer
 from analyze.deeppoly.transform.relu import ReluTransformer
 
