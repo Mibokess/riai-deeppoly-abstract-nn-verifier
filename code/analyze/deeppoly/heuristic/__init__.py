@@ -1,3 +1,4 @@
+import itertools
 from abc import ABC, abstractmethod
 import torch
 import numpy as np
@@ -15,10 +16,13 @@ class Heuristic(ABC):
 
 class Sequential(Heuristic):
 
-    def __init__(self, heuristics, check_intersection=False, timeout=180):
+    def __init__(self, heuristics, timeout, check_intersection=False):
         self._check_intersection = check_intersection
         self._timeout = timeout
         self._heuristics = heuristics
+
+    def _set_timeout(self, timeout):
+        self._timeout = timeout
 
     def run(self, deeppoly, elapsed_time=0):
         verified = False
@@ -29,7 +33,9 @@ class Sequential(Heuristic):
         for h in self._heuristics:
 
             heuristic = Implicit.convert(h)
-            verified, ads, steps = heuristic.run(deeppoly, elapsed_time=elapsed_time())
+            elapsed = elapsed_time()
+            self._update_timeout(heuristic, elapsed)
+            verified, ads, steps = heuristic.run(deeppoly, elapsed_time=elapsed)
 
             if not verified and self._check_intersection:
                 robustness_ad = ads[-1]
@@ -42,6 +48,16 @@ class Sequential(Heuristic):
                 break
 
         return verified, ads, steps
+
+
+    def _update_timeout(self, heuristic, elapsed_time):
+        if isinstance(heuristic, Sequential):
+            if heuristic._timeout is None:
+                heuristic._set_timeout(self._timeout)
+            else:
+                timeout = min(heuristic._timeout, self._timeout - elapsed_time)
+                heuristic._set_timeout(timeout)
+
 
 
 class Implicit(Heuristic):
@@ -61,18 +77,17 @@ class Implicit(Heuristic):
 
 class IterateOverArgs(Sequential):
 
-    def __init__(self, lambda_calculator, args):
+    def __init__(self, lambda_calculator, args, timeout=None):
         h = (Implicit(lambda_calculator(a)) for a in args)
-        super().__init__(h)
+        super().__init__(h, timeout)
 
 
 class Loop(Sequential):
 
-    def __init__(self, lambda_calculator, n_repeat=None):
-        if n_repeat is not None:
-            h = (Implicit(lambda_calculator()) for _ in range(0, n_repeat))
+    def __init__(self, lambda_calculator, n_repeat=None, timeout=None):
+        if n_repeat is None:
+            h = itertools.repeat(Implicit(lambda_calculator()))
         else:
-            h = iter(int, Implicit(lambda_calculator()))
-        super().__init__(h)
-
+            h = itertools.repeat(Implicit(lambda_calculator()), times=n_repeat)
+        super().__init__(h, timeout)
 

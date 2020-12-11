@@ -10,7 +10,12 @@ INPUT_SIZE = 28
 
 def analyze(net, inputs, eps, true_label):
     from analyze.deeppoly import analyzer
-    heuristic = H.Sequential([L.MinimizeArea(), L.Zonotope(), H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10))])
+    heuristic = H.Sequential([
+        L.MinimizeArea(),
+        L.Zonotope(),
+        H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10)),
+        H.Loop(L.Random, timeout=30)
+    ], timeout=180)
     dp = analyzer.DeepPoly(heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)
     return res
