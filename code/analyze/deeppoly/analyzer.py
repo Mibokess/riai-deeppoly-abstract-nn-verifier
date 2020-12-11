@@ -1,12 +1,10 @@
 import torch
-import networks
 from analyze import Analyzer
+from analyze.deeppoly.heuristic import Heuristic, Implicit
 from analyze.deeppoly.transform.factory import TransformerFactory
-from analyze.deeppoly.transform.relu.heuristic import MinimizeArea
+from analyze.deeppoly.transform.relu import ReluTransformer
 from analyze.deeppoly.domain import AbstractDomain
 from torch.nn.modules.activation import ReLU
-import numpy as np
-import time
 
 
 
@@ -20,7 +18,7 @@ class RobustnessProperty:
         ads = self._transformer.transform(ads)
         ad = ads[-1]
         verified = self.verify_bounds(ad.lower_bounds)
-        return verified, ad
+        return verified, ads
 
     def verify_bounds(self, lower_bounds):
         verified = torch.all(self._compare(lower_bounds, 0))
@@ -33,66 +31,60 @@ class RobustnessProperty:
         weights.fill_diagonal_(-1)
         weights[:, true_label] = 1
         layer.weight = torch.nn.Parameter(weights)
-        transformer = TransformerFactory.create(layer)
+        transformer = TransformerFactory.create(layer, backprop=True)
         return transformer
 
 
-class DeepPoly(Analyzer):
 
-    def __init__(self,
-                 relu_heuristics=MinimizeArea(),
-                 check_domain_intersect=False,
-                 timeout=180):
-        self._heuristic = relu_heuristics
-        self._timeout = timeout
-        self._check_intersect = check_domain_intersect
+class DeepPolyCoreEvaluator:
 
-
-    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater):
-        ini = AbstractDomain.create(inputs, eps, domain_bounds=domain_bounds)
-        self._heuristic.init(net, inputs)
+    def __init__(self, net, input, robustness_property):
+        self.input = input
+        self.net = net
 
         transformers = []
+        relu_id = 0
         for i, layer in enumerate(net.layers):
             backprop = i > 0 and isinstance(net.layers[i - 1], ReLU)
-            transformer = TransformerFactory.create(layer, self._heuristic, backprop)
+            relu_id = relu_id + 1 if isinstance(layer, ReLU) else relu_id
+            transformer = TransformerFactory.create(layer, backprop, relu_id)
             transformers.append(transformer)
 
-        robustness = RobustnessProperty(layer.out_features, true_label, robustness_fn)
-        return self._run(transformers, robustness, ini)
+        self.transformers = transformers
+        self.robustness = robustness_property
 
 
-    def _run(self, transformers, robustness, ad_input):
+    def set_lambda_calculator(self, lambda_calculator):
+        for tf in self.transformers:
+            if isinstance(tf, ReluTransformer):
+                tf.set_lambda_calculator(lambda_calculator)
 
-        verified = False
-        done = False
-        timeout = False
-        start_time = time.time()
-        ad_intersect = None
 
-        while not verified and not done and not timeout:
-            ads, steps = self._forward(transformers, ad_input)
-            verified, robustness_ad = robustness.verify(ads)
+    def forward(self):
+        ads = [self.input]
+        steps = ["input"]
+        for transformer in self.transformers:
+            ads = transformer.transform(ads)
+            steps.append(transformer.__class__.__name__)
 
-            if not verified and self._check_intersect:
-                ad_intersect = robustness_ad if ad_intersect is None else ad_intersect.intersection(robustness_ad)
-                verified = robustness.verify_bounds(ad_intersect.lower_bounds) if not verified else verified
-
-            if not verified:
-                done = not self._heuristic.next(robustness_ad.lower_bounds)
-
-            timeout = (time.time() - start_time) > self._timeout
-
+        verified, ads = self.robustness.verify(ads)
+        steps.append(RobustnessProperty.__name__)
         return verified, ads, steps
 
 
 
-    def _forward(self, transformers, ad_input):
-        ads = [ad_input]
-        steps = ["input"]
-        for transformer in transformers:
-            ads = transformer.transform(ads)
-            steps.append(transformer.__class__.__name__)
+class DeepPoly(Analyzer):
 
-        return ads, steps
+    def __init__(self, heuristic):
+        self._heuristic = Implicit.convert(heuristic)
+
+    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater):
+        deeppoly = self._create_deep_poly_evaluator(net, inputs, eps, true_label, domain_bounds, robustness_fn)
+        return self._heuristic.run(deeppoly)
+
+    def _create_deep_poly_evaluator(self, net, inputs, eps, true_label, domain_bounds, robustness_fn):
+        ini = AbstractDomain.create(inputs, eps, domain_bounds=domain_bounds)
+        robustness = RobustnessProperty(net.layers[-1].out_features, true_label, robustness_fn)
+        deeppoly = DeepPolyCoreEvaluator(net, ini, robustness)
+        return deeppoly
 

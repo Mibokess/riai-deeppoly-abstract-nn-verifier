@@ -9,7 +9,7 @@ from analyze.utils import TensorUtils
 
 class LinearTransformer(Transformer):
 
-    def __init__(self, layer, backprop=False):
+    def __init__(self, layer, backprop):
         self.backprop = backprop
 
         w = layer.weight.detach()
@@ -26,7 +26,7 @@ class LinearTransformer(Transformer):
         greater_than = GreaterThanConstraints(self.weights, self.bias)
         lower_than = LowerThanConstraints(self.weights, self.bias)
 
-        if True or self.backprop:
+        if self.backprop:
             lower_bounds, upper_bounds = self.compute_bounds(ads, lower_than, greater_than)
         else:
             ad = ads[-1]
@@ -35,7 +35,6 @@ class LinearTransformer(Transformer):
 
         ad_lin = AbstractDomain(lower_bounds, upper_bounds, lower_than, greater_than)
         return ad_lin
-
 
 
 
