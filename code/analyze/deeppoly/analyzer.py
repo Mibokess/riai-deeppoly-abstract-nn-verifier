@@ -7,7 +7,6 @@ from analyze.deeppoly.domain import AbstractDomain
 from torch.nn.modules.activation import ReLU
 
 
-
 class RobustnessProperty:
 
     def __init__(self, nb_features, true_label, comparison_fn):
@@ -16,13 +15,11 @@ class RobustnessProperty:
 
     def verify(self, ads):
         ads = self._transformer.transform(ads)
-        ad = ads[-1]
-        verified = self.verify_bounds(ad.lower_bounds)
+        verified = self.verify_bounds(ads[-1].lower_bounds)
         return verified, ads
 
     def verify_bounds(self, lower_bounds):
-        verified = torch.all(self._compare(lower_bounds, 0))
-        return verified
+        return torch.all(self._compare(lower_bounds, 0.0))
 
     @staticmethod
     def _create_transformer(nb_labels, true_label):
@@ -31,8 +28,7 @@ class RobustnessProperty:
         weights.fill_diagonal_(-1)
         weights[:, true_label] = 1
         layer.weight = torch.nn.Parameter(weights)
-        transformer = TransformerFactory.create(layer, backsubstitution=True)
-        return transformer
+        return TransformerFactory.create(layer, backsubstitution=True)
 
 
 
@@ -46,19 +42,17 @@ class DeepPolyCoreEvaluator:
         relu_id = 0
         for i, layer in enumerate(net.layers):
             backsubst = i > 0 and isinstance(net.layers[i - 1], ReLU)
-            relu_id = relu_id + 1 if isinstance(layer, ReLU) else relu_id
             transformer = TransformerFactory.create(layer, backsubst, relu_id)
             transformers.append(transformer)
+            relu_id = relu_id + 1 if isinstance(layer, ReLU) else relu_id
 
         self.transformers = transformers
         self.robustness = robustness_property
-
 
     def set_lambda_calculator(self, lambda_calculator):
         for tf in self.transformers:
             if isinstance(tf, ReluTransformer):
                 tf.set_lambda_calculator(lambda_calculator)
-
 
     def forward(self):
         ads = [self.input]
@@ -72,13 +66,12 @@ class DeepPolyCoreEvaluator:
         return verified, ads, steps
 
 
-
 class DeepPoly(Analyzer):
 
     def __init__(self, heuristic):
         self._heuristic = Implicit.convert(heuristic)
 
-    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater):
+    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater_equal):
         deeppoly = self._create_deep_poly_evaluator(net, inputs, eps, true_label, domain_bounds, robustness_fn)
         return self._heuristic.run(deeppoly)
 
@@ -87,4 +80,3 @@ class DeepPoly(Analyzer):
         robustness = RobustnessProperty(net.layers[-1].out_features, true_label, robustness_fn)
         deeppoly = DeepPolyCoreEvaluator(net, ini, robustness)
         return deeppoly
-
