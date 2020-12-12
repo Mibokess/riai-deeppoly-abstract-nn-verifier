@@ -95,7 +95,7 @@ class Loop(Sequential):
 
 
 class Optimize(Heuristic):
-    def __init__(self, net, true_label, false_label=None, timeout=180):
+    def __init__(self, net, true_label, false_label=None, timeout=10):
         self.net = net
         self.timeout = timeout
 
@@ -114,26 +114,29 @@ class Optimize(Heuristic):
             if i > 0 and isinstance(net.layers[i - 1], torch.nn.ReLU):
                 num_lambdas.append(layer.in_features)
 
-        self.lambdas = list(
-            map(lambda num_lambdas_layer: torch.rand(num_lambdas_layer, requires_grad=True), num_lambdas))
+        self.lambdas = list(map(lambda num_lambdas_layer: torch.rand(num_lambdas_layer, requires_grad=True), num_lambdas))
         self.num_lambdas = num_lambdas
 
     def run(self, deeppoly, elapsed_time=0):
         verified = False
         start_time = time.time()
 
+        ads, steps = None, None
+
         def elapsed_time():
             return time.time() - start_time
 
-        optimizer = torch.optim.SGD(self.lambdas, lr=0.01)
-        matrix = Matrix(list(map(lambda tensor: tensor.reshape(len(tensor), 1), self.lambdas)))
+        optimizer = torch.optim.SGD(self.lambdas, lr=0.01, momentum=0.3, weight_decay=0.1, nesterov=True)
+        lambdas_reshaped = list(map(lambda tensor: tensor.reshape(len(tensor), 1), self.lambdas))
+        matrix = Matrix(lambdas_reshaped)
+
+        deeppoly.set_lambda_calculator(matrix)
 
         while elapsed_time() < self.timeout:
             optimizer.zero_grad()
 
-            deeppoly.set_lambda_calculator(matrix)
-
             verified, ads, steps = deeppoly.forward()
+
             if verified:
                 return verified, ads, steps
 
@@ -142,9 +145,10 @@ class Optimize(Heuristic):
             else:
                 loss = loss_false_label(ads[-1].lower_bounds, self.false_label)
 
+            #print(loss)
+
             loss.backward()
             optimizer.step()
-
         return verified, ads, steps
 
 

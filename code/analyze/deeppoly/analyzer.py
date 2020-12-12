@@ -15,9 +15,8 @@ class RobustnessProperty:
 
     def verify(self, ads):
         ads = self._transformer.transform(ads)
-        ad = ads[-1]
-        verified = self.verify_bounds(ad.lower_bounds)
-
+        verified = self.verify_bounds(ads[-1].lower_bounds)
+        
         return verified, ads
 
     def verify_bounds(self, lower_bounds):
