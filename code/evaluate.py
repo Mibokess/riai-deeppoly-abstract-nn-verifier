@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import os
 from verifier import main as run_verifier
@@ -52,8 +54,11 @@ class Evaluator:
                 o = self._oracles[test_folder]
                 folder_name = os.path.split(os.path.dirname(test_folder))[-1]
                 for test in self.get_test_cases(test_folder, net):
+
                     test_name = os.path.basename(test)
+                    start_time = time.time()
                     out = run_verifier(net=net, spec=test, verbose=False)
+                    runtime = round(time.time() - start_time, 2)
                     gt = o.ground_truth(net, test)
                     sound = False if (gt == "not verified") and (out == "verified") else sound
                     max_score = max_score + 1 if gt == "verified" else max_score
@@ -66,7 +71,9 @@ class Evaluator:
                         point = -2
                     else:
                         status = "FAILED"
-                    print(f"- test {folder_name}/{test_name}: {status}  ({point} point - expecting '{gt}' got '{out}')")
+                    point_msg = f"({point} point - expecting '{gt}' got '{out}')"
+                    runtime_msg = f"runtime: {runtime} seconds"
+                    print(f"- test {folder_name}/{test_name}: {status} {point_msg} - {runtime_msg}")
                     score += point
                     correct += (gt == out)
                     total += 1

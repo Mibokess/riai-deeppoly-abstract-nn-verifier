@@ -42,7 +42,7 @@ class GreaterThanConstraints(RelationalConstraints):
 class LowerThanConstraints(RelationalConstraints):
     """
         describes "lower than" relational contraints
-         i.e. constraints of the type A_{<} * x^0 + c^L <= x^L_i
+        i.e. constraints of the type A_{<} * x^0 + c^L <= x^L_i
     """
 
     def compute_bounds(self, input_lower_bounds, input_upper_bounds):
