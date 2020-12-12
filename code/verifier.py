@@ -10,12 +10,26 @@ INPUT_SIZE = 28
 
 def analyze(net, inputs, eps, true_label):
     from analyze.deeppoly import analyzer
-    heuristic = H.Sequential([
+    """heuristic = H.Sequential([
         L.MinimizeArea(),
         L.Zonotope(),
-        H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10)),
+        #H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10)),
         H.Loop(L.Random, timeout=30)
-    ], timeout=180)
+    ], timeout=180)"""
+
+    heuristic = H.Optimize(net, true_label)
+
+    """heuristics = []
+    timeout_global = 30.0
+
+    timeout = timeout_global / net.layers[-1].out_features
+
+    for i in range(net.layers[-1].out_features):
+        if i != true_label:
+            heuristics.append(H.Optimize(net, true_label, i, timeout))
+
+    heuristic = H.Sequential(heuristics, timeout_global, True)"""
+
     dp = analyzer.DeepPoly(heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)
     return res

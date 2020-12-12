@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import torch
+from torch.nn import *
 import numpy as np
 
 
@@ -52,4 +53,3 @@ class Matrix(LambdaCalculator):
 
     def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
         return self._lambdas[layer_id][mask]
-
