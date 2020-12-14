@@ -31,8 +31,8 @@ class RobustnessProperty:
         weights[:, true_label] = 1
 
         layer.weight = torch.nn.Parameter(weights)
-
-        return TransformerFactory.create(layer, backprop=True)
+        transformer = TransformerFactory.create(layer, backsubstitution=True)
+        return transformer
 
 
 class DeepPolyCoreEvaluator:
@@ -44,8 +44,8 @@ class DeepPolyCoreEvaluator:
         transformers = []
         relu_id = 0
         for i, layer in enumerate(net.layers):
-            backprop = i > 0 and isinstance(net.layers[i - 1], ReLU)
-            transformer = TransformerFactory.create(layer, backprop, relu_id)
+            backsubst = i > 0 and isinstance(net.layers[i - 1], ReLU)
+            transformer = TransformerFactory.create(layer, backsubst, relu_id)
             transformers.append(transformer)
             relu_id = relu_id + 1 if isinstance(layer, ReLU) else relu_id
 

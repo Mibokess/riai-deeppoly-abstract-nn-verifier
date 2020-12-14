@@ -1,14 +1,20 @@
 from abc import ABC, abstractmethod
 import torch
 import networks
-from analyze.deeppoly.domain import AbstractDomain, RelationalConstraints
+from analyze.deeppoly.domain import AbstractDomain
 from analyze.deeppoly.transform import Transformer
 
 
 class Preprocessor(Transformer):
 
-    def _transform(self, ads):
-        raise NotImplementedError()
+    def transform(self, abstract_domains):
+        ad = abstract_domains[-1].clone()
+        ad = self._transform(ad)
+        if ad.has_constraints():
+            # we are not in preprocessing mode anymore
+            return abstract_domains[:-1] + [ad]
+        return [ad]
+
 
 
 class NormalizeTransformer(Preprocessor):
@@ -18,20 +24,15 @@ class NormalizeTransformer(Preprocessor):
             f"expecting Normalization layer got {norm_layer.__class__.__name__}"
         self._l = norm_layer
 
-    def transform(self, abstract_domains):
-        return [AbstractDomain.preprocess(abstract_domains[-1], self._l.forward)]
+    def _transform(self, ad):
+        return AbstractDomain.preprocess(ad, self._l.forward)
 
 
 class FlattenTransformer(Preprocessor):
 
-    def transform(self, abstract_domains):
-        def flatten(a):
-            f = torch.flatten(a)
-            return f.reshape(f.shape[0], 1)
-        ad = AbstractDomain.preprocess(abstract_domains[-1], flatten)
-        if abstract_domains[-1].has_constraints():
-            # we are not in preprocessing step
-            return abstract_domains + [ad]
-        return [ad]
+    def _transform(self, ad):
+        ad.output_shape = AbstractDomain.flatten(torch.zeros(ad.output_shape))
+        return ad
+
 
 
