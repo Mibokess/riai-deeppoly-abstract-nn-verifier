@@ -14,7 +14,7 @@ def analyze(net, inputs, eps, true_label):
         L.MinimizeArea(),
         L.Zonotope(),
         H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10)),
-        H.Loop(L.Random, timeout=30)
+        # H.Loop(L.Random, timeout=30)
     ], timeout=180)
     dp = analyzer.DeepPoly(heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)

@@ -15,5 +15,3 @@ class TensorUtils:
         A_neg = A.clone()
         A_neg[A > 0] = 0
         return A_pos, A_neg
-
-

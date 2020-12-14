@@ -66,18 +66,21 @@ class AbstractDomain:
         - x^L_i >= lower_than.A * x^{L-1} + lower_than.v[i]
         - x^L_i <= greater_than.A * x^{L-1} + greater_than.v[i]
           where x^{L-1} are the nodes of the previous layer
+        - output_shape represents the real shape of x^L without the batch size, ie #channels x H x W
     """
     lower_bounds: torch.Tensor
     upper_bounds: torch.Tensor
     lower_than: LowerThanConstraints
     greater_than: GreaterThanConstraints
+    output_shape: torch.Size
 
 
     def preprocess(self, function):
-        l = function(self.lower_bounds)
-        u = function(self.upper_bounds)
+        """ :param function - a preprocessing function that should not change the input dimension """
+        l = AbstractDomain.flatten(function(self.lower_bounds))
+        u = AbstractDomain.flatten(function(self.upper_bounds))
         assert self.lower_than is None and self.greater_than is None
-        return AbstractDomain(l, u, None, None)
+        return AbstractDomain(l, u, None, None, self.output_shape)
 
 
     def has_constraints(self):
@@ -92,34 +95,18 @@ class AbstractDomain:
         if clamp:
             u = torch.clamp(u, domain_bounds[0], domain_bounds[1])
             l = torch.clamp(l, domain_bounds[0], domain_bounds[1])
-        return AbstractDomain(l, u, None, None)
 
-
-    @staticmethod
-    def last_preprocessing_step(abstract_domains):
-        preprocessing_steps = [ad for ad in abstract_domains if not ad.has_constraints()]
-        return preprocessing_steps[-1]
-
-
-    def init(self):
-        if self.has_constraints():
-            return self
-
-        def idty():
-            return torch.eye(len(self.lower_bounds))
-
-        lower_than = LowerThanConstraints(idty(), torch.zeros_like(self.lower_bounds))
-        greater_than = GreaterThanConstraints(idty(), torch.zeros_like(self.upper_bounds))
-
-        return AbstractDomain(self.lower_bounds, self.upper_bounds, lower_than, greater_than)
+        l = AbstractDomain.flatten(l)
+        u = AbstractDomain.flatten(u)
+        return AbstractDomain(l, u, None, None, output_shape=inputs.shape[1:])
 
 
     def clone(self):
         lb = self.lower_bounds.clone()
         ub = self.upper_bounds.clone()
-        lrc = self.lower_than.clone()
-        urc = self.greater_than.clone()
-        return AbstractDomain(lb, ub, lrc, urc)
+        lrc = self.lower_than.clone() if self.lower_than is not None else None
+        urc = self.greater_than.clone() if self.greater_than is not None else None
+        return AbstractDomain(lb, ub, lrc, urc, self.output_shape)
 
 
     def intersection(self, ad):
@@ -135,3 +122,8 @@ class AbstractDomain:
         inter.greater_than.v[upper, :] = inter.greater_than.v[upper, :]
         return inter
 
+
+    @staticmethod
+    def flatten(a):
+        f = torch.flatten(a)
+        return f.reshape(f.shape[0], 1)
