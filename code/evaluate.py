@@ -36,10 +36,13 @@ class Evaluator:
         self._test(self.nns)
 
     def test_fc(self):
-        self._test(list(filter(lambda n: n.startswith("fc"), self.nns)))
+        self.test("fc")
 
     def test_conv2d(self):
-        self._test(list(filter(lambda n: n.startswith("conv"), self.nns)))
+        self.test("conv")
+
+    def test(self, startswith):
+        self._test(list(filter(lambda n: n.startswith(startswith), self.nns)))
 
     def _test(self, nns):
         total = 0
@@ -91,6 +94,6 @@ class Evaluator:
 
 if __name__ == '__main__':
     e = Evaluator(glob.glob(f"../*test_cases/"))
-    e.test_fc()
+    # e.test_fc()
     # e.test_conv2d()
-    #e.test_all()
+    e.test_all()

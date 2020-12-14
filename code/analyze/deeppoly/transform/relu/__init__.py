@@ -36,7 +36,7 @@ class ReluTransformer(Transformer):
         lambda_up = ad.upper_bounds[relu_mask] / delta
         c_up = - ad.lower_bounds[relu_mask] * ad.upper_bounds[relu_mask] / delta
 
-        relu_greater_than.A[relu_mask, :] *= lambda_up
+        relu_greater_than.A[relu_mask, relu_mask] *= lambda_up[:, 0]
         relu_greater_than.v[relu_mask] += c_up
 
         # 3.2 for the lower bound, the heuristic..
@@ -45,13 +45,13 @@ class ReluTransformer(Transformer):
         lambda_low = self._lambda_calculator.compute_lambda(
             self._relu_id, relu_mask, ad.lower_bounds[relu_mask], ad.upper_bounds[relu_mask])
 
-        relu_lower_than.A[relu_mask, :] *= lambda_low
+        relu_lower_than.A[relu_mask, relu_mask] *= lambda_low[:, 0]
 
         # ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
         # ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
 
         lower_bounds, upper_bounds = self.compute_bounds(ads, relu_lower_than, relu_greater_than)
-        ad_relu = AbstractDomain(lower_bounds, upper_bounds, relu_lower_than, relu_greater_than)
+        ad_relu = AbstractDomain(lower_bounds, upper_bounds, relu_lower_than, relu_greater_than, ad.output_shape)
 
         return ad_relu
 
