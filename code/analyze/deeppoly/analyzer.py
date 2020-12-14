@@ -5,7 +5,7 @@ from analyze.deeppoly.transform.factory import TransformerFactory
 from analyze.deeppoly.transform.relu import ReluTransformer
 from analyze.deeppoly.domain import AbstractDomain
 from torch.nn.modules.activation import ReLU
-
+from analyze.deeppoly import setup
 
 class RobustnessProperty:
 
@@ -71,7 +71,7 @@ class DeepPoly(Analyzer):
     def __init__(self, heuristic):
         self._heuristic = Implicit.convert(heuristic)
 
-    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=torch.greater_equal):
+    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=setup.robustness_function):
         deeppoly = self._create_deep_poly_evaluator(net, inputs, eps, true_label, domain_bounds, robustness_fn)
         return self._heuristic.run(deeppoly)
 
