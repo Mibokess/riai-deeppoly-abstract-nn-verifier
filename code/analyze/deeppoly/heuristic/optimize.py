@@ -8,10 +8,14 @@ from analyze.deeppoly.transform.relu.lambda_ import Matrix
 from analyze.deeppoly.heuristic import Heuristic
 
 
-
-
 def loss_mean(lower_bounds):
     return -(lower_bounds[lower_bounds < 0.0].mean())
+
+
+def loss_diff(lower_bounds):
+    neg = -(lower_bounds[lower_bounds < 0.0].mean())
+    pos = (lower_bounds[lower_bounds > 0.0].mean())
+    return neg - pos
 
 
 def loss_squared(lower_bounds):
@@ -21,10 +25,8 @@ def loss_squared(lower_bounds):
 def loss_max(lower_bounds):
     return -torch.min(lower_bounds[lower_bounds < 0.0])
 
-
 def loss_false_label(lower_bounds, false_label):
     return -lower_bounds[false_label]
-
 
 
 
@@ -80,9 +82,8 @@ class Optimize(Heuristic):
             else:
                 loss = loss_false_label(ads[-1].lower_bounds, self.false_label)
 
-            #print(loss)
-
             loss.backward()
             optimizer.step()
+
         return verified, ads, steps
 
