@@ -5,6 +5,7 @@ import torch
 class ReluTransformer(Transformer):
 
     def __init__(self, relu_id):
+        super().__init__()
         self._lambda_calculator = None
         self._relu_id = relu_id
 

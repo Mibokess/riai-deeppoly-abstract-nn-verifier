@@ -1,17 +1,20 @@
+from analyze.utils import NetworkInspector
 from networks import FullyConnected, Conv
 import analyze.deeppoly.heuristic as H
-from analyze.deeppoly.heuristic.optimize import Optimize
+from analyze.deeppoly.heuristic.optimize import Optimize, LossFunctions as LF
 import analyze.deeppoly.transform.relu.lambda_ as L
 import numpy as np
 
 
 class HeuristicFactory:
 
-    @staticmethod
-    def create(net, true_label):
+    def __init__(self, net, inputs, true_label):
+        self.net = net
+        self.inputs = inputs
+        self.true_label = true_label
 
-        simplest = HeuristicFactory.simplest()
-        desperate = H.Loop(L.Random, timeout=30)
+
+    def create(self):
 
         """
         heuristics = []
@@ -26,19 +29,26 @@ class HeuristicFactory:
         heuristic = H.Sequential(heuristics, timeout_global, True)
         """
 
-        if isinstance(net, Conv):
-            # in case we need to put different heuristic per net...
-            return H.Sequential(simplest.heuristics, timeout=180)
+        if isinstance(self.net, Conv):
+            return self.optimize(loss_fn=LF.loss_sum, timeout=180)
 
-        optimize = Optimize(net, true_label, timeout=30)
-        # return H.Sequential(simplest.heuristics + [optimize], timeout=180)
-        return optimize
+        return self.optimize(loss_fn=LF.loss_sum, timeout=30)
 
 
-    @staticmethod
-    def simplest():
+    @property
+    def simplest(self):
         return H.Sequential([
                     L.MinimizeArea(),
                     L.Zonotope(),
                     H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10))
         ], timeout=180)
+
+
+    @property
+    def desperate(self):
+        return H.Loop(L.Random, timeout=30)
+
+
+    def optimize(self, loss_fn=LF.loss_diff, timeout=30, debug=False):
+        inspector = NetworkInspector(self.net, self.inputs)
+        return Optimize(inspector.get_relu_input_sizes(), loss_fn, timeout=timeout, debug=debug)

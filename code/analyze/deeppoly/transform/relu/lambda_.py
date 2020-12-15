@@ -52,4 +52,4 @@ class Matrix(LambdaCalculator):
         self._lambdas = lambdas
 
     def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
-        return torch.clamp(self._lambdas[layer_id][mask], 0, 1)
+        return torch.clamp(self._lambdas[layer_id][mask], 0.0, 1.0)

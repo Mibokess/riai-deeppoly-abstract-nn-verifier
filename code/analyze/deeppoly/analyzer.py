@@ -2,10 +2,13 @@ import torch
 from analyze import Analyzer
 from analyze.deeppoly.heuristic import Heuristic, Implicit
 from analyze.deeppoly.transform.factory import TransformerFactory
+from analyze.deeppoly.transform.preprocess import Preprocessor
 from analyze.deeppoly.transform.relu import ReluTransformer
 from analyze.deeppoly.domain import AbstractDomain
 from torch.nn.modules.activation import ReLU
 from analyze.deeppoly import setup
+from analyze.utils import Timer
+
 
 class RobustnessProperty:
 
@@ -54,6 +57,22 @@ class DeepPolyCoreEvaluator:
             if isinstance(tf, ReluTransformer):
                 tf.set_lambda_calculator(lambda_calculator)
 
+    def set_backsubstitution_to(self, id):
+        for tf in self.transformers:
+            tf.set_backsubstitution_to(id)
+
+    def get_nb_layers(self):
+        return len(self.transformers)
+
+    def get_relu_layer_ids(self):
+        ids, id = [], 0
+        for tf in self.transformers:
+            if not isinstance(tf, Preprocessor):
+                id += 1
+            if isinstance(tf, ReluTransformer):
+                ids.append(id)
+        return ids
+
     def forward(self):
         ads = [self.input]
         steps = ["input"]
@@ -64,6 +83,7 @@ class DeepPolyCoreEvaluator:
         verified, ads = self.robustness.verify(ads)
         steps.append(RobustnessProperty.__name__)
         return verified, ads, steps
+
 
 
 class DeepPoly(Analyzer):

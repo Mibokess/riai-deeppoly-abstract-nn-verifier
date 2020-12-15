@@ -9,7 +9,7 @@ INPUT_SIZE = 28
 
 def analyze(net, inputs, eps, true_label):
     from analyze.deeppoly import analyzer
-    heuristic = HeuristicFactory.create(net, true_label)
+    heuristic = HeuristicFactory(net, inputs, true_label).create()
     dp = analyzer.DeepPoly(heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)
     return res
