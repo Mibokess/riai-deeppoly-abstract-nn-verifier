@@ -20,15 +20,7 @@ class LossFunctions:
 
     @staticmethod
     def loss_diff(lower_bounds):
-        neg_lower_bounds = lower_bounds[lower_bounds < 0.0]
-        neg = 0.0
-        if len(neg_lower_bounds) > 0:
-            neg = -neg_lower_bounds.mean()
-        pos_lower_bounds = lower_bounds[lower_bounds > 0.0]
-        pos = 0.0
-        if len(pos_lower_bounds) > 0:
-            pos = pos_lower_bounds.mean()
-        return neg - pos
+        return -lower_bounds[lower_bounds < 0.0].sum() - lower_bounds[lower_bounds > 0.0].sum()
 
     @staticmethod
     def loss_squared(lower_bounds):
@@ -57,7 +49,7 @@ class Optimize(Heuristic):
         verified = False
         ads, steps = None, None
 
-        optimizer = torch.optim.SGD(self.lambdas, lr=0.5, momentum=0.0, weight_decay=0.0, nesterov=False)
+        optimizer = torch.optim.SGD(self.lambdas, lr=0.05, momentum=0.0, weight_decay=0.0, nesterov=False)
         matrix = Matrix(self.lambdas)
         deeppoly.set_lambda_calculator(matrix)
 

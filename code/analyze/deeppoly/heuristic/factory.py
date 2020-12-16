@@ -32,8 +32,8 @@ class HeuristicFactory:
         if isinstance(self.net, Conv):
             return self.optimize(loss_fn=LF.loss_sum, timeout=180)
 
+        # return H.AdHocBackSubstitution(self.optimize(loss_fn=LF.loss_sum, timeout=30, debug=False))
         return self.optimize(loss_fn=LF.loss_sum, timeout=30)
-
 
     @property
     def simplest(self):
@@ -49,6 +49,6 @@ class HeuristicFactory:
         return H.Loop(L.Random, timeout=30)
 
 
-    def optimize(self, loss_fn=LF.loss_diff, timeout=30, debug=False):
+    def optimize(self, loss_fn=LF.loss_sum, timeout=30, debug=False):
         inspector = NetworkInspector(self.net, self.inputs)
         return Optimize(inspector.get_relu_input_sizes(), loss_fn, timeout=timeout, debug=debug)
