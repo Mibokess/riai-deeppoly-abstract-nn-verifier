@@ -20,6 +20,7 @@ class Preprocessor(Transformer):
 class NormalizeTransformer(Preprocessor):
 
     def __init__(self, norm_layer):
+        super().__init__()
         assert type(norm_layer) is networks.Normalization, \
             f"expecting Normalization layer got {norm_layer.__class__.__name__}"
         self._l = norm_layer

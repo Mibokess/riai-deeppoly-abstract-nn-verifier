@@ -13,6 +13,7 @@ from analyze.deeppoly.transform import Transformer
 class AffineTransformer(Transformer):
 
     def __init__(self, backsubstitution):
+        super().__init__()
         self.backsubstitution = backsubstitution
 
     @property

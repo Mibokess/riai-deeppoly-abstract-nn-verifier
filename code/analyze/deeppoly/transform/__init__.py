@@ -7,23 +7,27 @@ from analyze.utils import TensorUtils
 
 class Transformer(ABC):
 
+    def __init__(self):
+        self._back_to = 0
+
     def transform(self, abstract_domains):
         ad = self._transform(abstract_domains)
         return abstract_domains + [ad]
-
 
     @abstractmethod
     def _transform(self, abstract_domains):
         pass
 
+    def set_backsubstitution_to(self, id):
+        self._back_to = id
 
-    @staticmethod
-    def compute_bounds(ads, lower_than0, greater_than0):
+    def compute_bounds(self, ads, lower_than0, greater_than0):
         """ computes the upper and lower bounds with backpropagation """
+        id = self._back_to
         lower_than = lower_than0.clone()
         greater_than = greater_than0.clone()
 
-        for ad in reversed(ads[1:]):
+        for ad in reversed(ads[(id+1):]):
             greater_than_pos, greater_than_neg = TensorUtils.split_positive_negative(greater_than.A)
 
             A_gt = torch.matmul(greater_than_pos, ad.greater_than.A) + torch.matmul(greater_than_neg, ad.lower_than.A)
@@ -37,7 +41,7 @@ class Transformer(ABC):
             lower_than = LowerThanConstraints(A_lt, v_lt)
 
 
-        input = ads[0]
+        input = ads[id] if id < len(ads) else ads[-1]
         upper_bound = greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
         lower_bound = lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
 
