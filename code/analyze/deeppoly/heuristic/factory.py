@@ -30,10 +30,10 @@ class HeuristicFactory:
         """
 
         if isinstance(self.net, Conv):
-            return self.optimize(loss_fn=LF.loss_sum, timeout=180)
+            return self.optimize(loss_fn=LF.loss_sum, timeout=170)
 
         # return H.AdHocBackSubstitution(self.optimize(loss_fn=LF.loss_sum, timeout=30, debug=False))
-        return self.optimize(loss_fn=LF.loss_sum, timeout=30)
+        return self.optimize(loss_fn=LF.loss_sum, timeout=170)
 
     @property
     def simplest(self):
@@ -41,7 +41,7 @@ class HeuristicFactory:
                     L.MinimizeArea(),
                     L.Zonotope(),
                     H.IterateOverArgs(L.Constant, np.linspace(0, 1, 10))
-        ], timeout=180)
+        ], timeout=170)
 
 
     @property
@@ -49,6 +49,6 @@ class HeuristicFactory:
         return H.Loop(L.Random, timeout=30)
 
 
-    def optimize(self, loss_fn=LF.loss_sum, timeout=30, debug=False):
+    def optimize(self, loss_fn=LF.loss_sum, timeout=170, debug=False):
         inspector = NetworkInspector(self.net, self.inputs)
         return Optimize(inspector.get_relu_input_sizes(), loss_fn, timeout=timeout, debug=debug)

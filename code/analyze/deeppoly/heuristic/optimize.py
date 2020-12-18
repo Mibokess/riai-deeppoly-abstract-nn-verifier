@@ -46,20 +46,18 @@ class Optimize(Heuristic):
         self.debug = debug
 
     def _run(self, deeppoly):
-        #self.debug = True
-
         verified = False
         ads, steps = None, None
 
-        optimizer = torch.optim.SGD(self.lambdas, lr=0.9, momentum=0.0, weight_decay=0.0, nesterov=False)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, verbose=self.debug, patience=5)
+        optimizer = torch.optim.SGD(self.lambdas, lr=0.5, momentum=0.3, weight_decay=0.0, nesterov=False)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, verbose=self.debug, patience=5, cooldown=10)
         matrix = Matrix(self.lambdas)
         deeppoly.set_lambda_calculator(matrix)
 
         best_loss = float("inf")
         steps_since_improvement = 0
 
-        while not False:
+        while not self.timeout():
             optimizer.zero_grad()
 
             verified, ads, steps = deeppoly.forward()
@@ -82,8 +80,8 @@ class Optimize(Heuristic):
                 best_loss = loss
                 steps_since_improvement = 0
 
-            if steps_since_improvement > 30:
-                return verified, ads, steps
+            """if steps_since_improvement > 10:
+                return verified, ads, steps"""
 
         return verified, ads, steps
 
