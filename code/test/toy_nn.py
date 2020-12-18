@@ -100,8 +100,11 @@ class ToyNNsTestCase(unittest.TestCase):
         """
             Verifying toy NN of the Deep poly paper page 41:5
         """
-        dp = DeepPoly(heuristic=Zero())
-        res, ads, steps = dp.verify(ToyNNPaper(), torch.zeros((2, 1)), 1, 0, domain_bounds=[-1, 1])
+        net = ToyNNPaper()
+        inputs = torch.zeros((2, 1)).reshape(1, 2)
+        from analyze.deeppoly.heuristic.factory import HeuristicFactory
+        dp = DeepPoly(heuristic=HeuristicFactory(net, inputs, 0).create())
+        res, ads, steps = dp.verify(net, inputs, 1, 0, domain_bounds=[-1, 1])
 
         expected_lower_bounds = [[-1, -1], [-2, -2], [0, 0], [0, -2], [0, 0], [1.0, 0], [1]]
         expected_upper_bounds = [[1, 1], [2, 2], [2, 2], [3, 2.0], [3, 2], [5.5, 2], None]
@@ -121,11 +124,10 @@ class ToyNNsTestCase(unittest.TestCase):
 
     def _check_bounds(self, what, exp, got, step):
         exp = np.array(exp)
-        got = got.flatten().numpy()
+        got = got.flatten().detach().numpy()
         self.assertTrue(np.all(np.isclose(got, exp)),
                         f"{what} bounds for layer {step} are not correct (expecting {exp} got {got})")
 
 
 if __name__ == "__main__":
     unittest.main()
-

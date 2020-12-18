@@ -47,7 +47,8 @@ class DeepPolyCoreEvaluator:
             backsubst = i > 0 and isinstance(net.layers[i - 1], ReLU)
             transformer = TransformerFactory.create(layer, backsubst, relu_id)
             transformers.append(transformer)
-            relu_id = relu_id + 1 if isinstance(layer, ReLU) else relu_id
+            if isinstance(layer, ReLU):
+                relu_id += 1
 
         self.transformers = transformers
         self.robustness = robustness_property
@@ -91,7 +92,7 @@ class DeepPoly(Analyzer):
     def __init__(self, heuristic):
         self._heuristic = Implicit.convert(heuristic)
 
-    def verify(self, net, inputs, eps, true_label, domain_bounds=[0, 1], robustness_fn=setup.robustness_function):
+    def verify(self, net, inputs, eps, true_label, domain_bounds=[0.0, 1.0], robustness_fn=setup.robustness_function):
         deeppoly = self._create_deep_poly_evaluator(net, inputs, eps, true_label, domain_bounds, robustness_fn)
         return self._heuristic.run(deeppoly)
 

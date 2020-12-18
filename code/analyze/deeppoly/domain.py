@@ -74,6 +74,13 @@ class AbstractDomain:
     greater_than: GreaterThanConstraints
     output_shape: torch.Size
 
+    def __init__(self, lower_bounds, upper_bounds, lower_than, greater_than, output_shape):
+        self.lower_bounds = lower_bounds
+        self.upper_bounds = upper_bounds
+        self.lower_than = lower_than
+        self.greater_than = greater_than
+        self.output_shape = output_shape
+
 
     def preprocess(self, function):
         """ :param function - a preprocessing function that should not change the input dimension """
@@ -88,7 +95,7 @@ class AbstractDomain:
 
 
     @staticmethod
-    def create(inputs, epsilon, norm="Linf", domain_bounds=[0, 1], clamp=True):
+    def create(inputs, epsilon, norm="Linf", domain_bounds=[0.0, 1.0], clamp=True):
         assert norm.lower().strip() == "linf", f"{norm} norm is not supported"
         u = inputs + epsilon
         l = inputs - epsilon

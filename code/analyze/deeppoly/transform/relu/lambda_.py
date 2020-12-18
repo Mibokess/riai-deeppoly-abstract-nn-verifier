@@ -48,8 +48,20 @@ class Constant(LambdaCalculator):
 
 class Matrix(LambdaCalculator):
 
-    def __init__(self, lambdas):
-        self._lambdas = lambdas
+    def __init__(self, lambdas, num_lambdas, changed=True):
+        self.lambdas = lambdas
+        self._num_lambdas = num_lambdas
+        self.changed_lambdas_index = []
+        self.changed = changed
 
     def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
-        return torch.clamp(self._lambdas[layer_id][mask], 0.0, 1.0)
+        layer_index = sum(self._num_lambdas[:layer_id])
+        lambdas = self.lambdas[layer_index:layer_index + self._num_lambdas[layer_id]]
+
+        if len(self.changed_lambdas_index) == len(self._num_lambdas):
+            if mask.sum() != len(self.changed_lambdas_index[layer_id]):
+                self.changed = True
+        else:
+            self.changed_lambdas_index.append(torch.nonzero(mask) + layer_index)
+
+        return torch.cat(lambdas)[mask]

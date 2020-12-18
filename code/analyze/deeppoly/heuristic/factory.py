@@ -34,6 +34,7 @@ class HeuristicFactory:
 
         # return H.AdHocBackSubstitution(self.optimize(loss_fn=LF.loss_sum, timeout=30, debug=False))
         return self.optimize(loss_fn=LF.loss_sum, timeout=30)
+        #return self.simplest
 
     @property
     def simplest(self):

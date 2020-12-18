@@ -47,3 +47,46 @@ class Transformer(ABC):
 
         return lower_bound, upper_bound
 
+    def compute_bounds1(self, ads, lower_than_start, greater_than_start):
+        lower_bounds = []
+        upper_bounds = []
+
+        for i, initial in enumerate(lower_than_start.A):
+            lower_bound = self.backprop_lower(initial, ads)
+            lower_bounds.append(lower_bound)
+
+        for i, initial in enumerate(greater_than_start.A):
+            upper_bound = self.backprop_upper(initial, ads)
+            upper_bounds.append(upper_bound)
+
+        return torch.cat(lower_bounds).reshape(len(lower_bounds), 1) + lower_than_start.v, torch.cat(upper_bounds).reshape(len(upper_bounds), 1) + greater_than_start.v
+
+    def backprop_lower(self, initial, ads):
+        initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
+
+        if len(ads) == 1 or not ads[-1].lower_than or not ads[-1].greater_than:
+            return torch.matmul(initial_pos, ads[-1].lower_bounds) + torch.matmul(initial_neg, ads[-1].upper_bounds)
+
+        layer_prop_A = torch.matmul(initial_pos, ads[-1].lower_than.A) + torch.matmul(initial_neg, ads[-1].greater_than.A)
+        layer_prop_v = torch.matmul(ads[-1].lower_than.v.T, initial_pos) + torch.matmul(ads[-1].greater_than.v.T, initial_neg)
+
+        lower_bound = self.backprop_lower(layer_prop_A, ads[:-1])
+
+        return lower_bound + layer_prop_v
+
+    def backprop_upper(self, initial, ads):
+        initial_pos, initial_neg = TensorUtils.split_positive_negative(initial)
+
+        if len(ads) == 1 or not ads[-1].greater_than:
+            return torch.matmul(initial_pos, ads[-1].upper_bounds) + torch.matmul(initial_neg, ads[-1].lower_bounds)
+
+        layer_prop_A = torch.matmul(initial_pos, ads[-1].greater_than.A) + torch.matmul(initial_neg, ads[-1].lower_than.A)
+        layer_prop_v = torch.matmul(ads[-1].greater_than.v.T, initial_pos) + torch.matmul(ads[-1].lower_than.v.T, initial_neg)
+        
+        upper_bound = self.backprop_upper(layer_prop_A, ads[:-1])
+
+        return upper_bound + layer_prop_v
+
+
+
+

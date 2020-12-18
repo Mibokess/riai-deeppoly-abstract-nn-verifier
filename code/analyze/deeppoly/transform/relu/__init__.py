@@ -13,7 +13,6 @@ class ReluTransformer(Transformer):
     def set_lambda_calculator(self, lambda_calculator):
         self._lambda_calculator = lambda_calculator
 
-
     def _transform(self, ads):
         assert self._lambda_calculator is not None, "relu lambda calculator is not set"
 
@@ -42,16 +41,15 @@ class ReluTransformer(Transformer):
 
         # 3.2 for the lower bound, the heuristic..
         # x^L_j >= lambda * x^(L-1)_j
-
         lambda_low = self._lambda_calculator.compute_lambda(
             self._relu_id, relu_mask, ad.lower_bounds[relu_mask], ad.upper_bounds[relu_mask])
 
-        relu_lower_than.A[relu_mask, relu_mask] *= lambda_low[:, 0]
+        relu_lower_than.A[relu_mask, relu_mask] *= lambda_low
 
-        # ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
-        # ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        lower_bounds = relu_lower_than.compute_bounds(ads[-1].lower_bounds, ads[-1].upper_bounds)
+        upper_bounds = relu_greater_than.compute_bounds(ads[-1].lower_bounds, ads[-1].upper_bounds)
 
-        lower_bounds, upper_bounds = self.compute_bounds(ads, relu_lower_than, relu_greater_than)
+        #lower_bounds, upper_bounds = self.compute_bounds(ads, relu_lower_than, relu_greater_than)
         ad_relu = AbstractDomain(lower_bounds, upper_bounds, relu_lower_than, relu_greater_than, ad.output_shape)
 
         return ad_relu
