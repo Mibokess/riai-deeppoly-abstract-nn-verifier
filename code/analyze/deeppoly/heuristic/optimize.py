@@ -80,8 +80,8 @@ class Optimize(Heuristic):
                 best_loss = loss
                 steps_since_improvement = 0
 
-            """if steps_since_improvement > 10:
-                return verified, ads, steps"""
+            if steps_since_improvement > 10000:
+                return verified, ads, steps
 
         return verified, ads, steps
 
