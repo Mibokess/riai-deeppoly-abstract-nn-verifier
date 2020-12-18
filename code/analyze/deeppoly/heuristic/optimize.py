@@ -49,7 +49,8 @@ class Optimize(Heuristic):
         verified = False
         ads, steps = None, None
 
-        optimizer = torch.optim.SGD(self.lambdas, lr=0.1, momentum=0.0, weight_decay=0.0, nesterov=False)
+        optimizer = torch.optim.SGD(self.lambdas, lr=0.9, momentum=0.0, weight_decay=0.0, nesterov=False)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         matrix = Matrix(self.lambdas)
         deeppoly.set_lambda_calculator(matrix)
 
@@ -69,6 +70,7 @@ class Optimize(Heuristic):
             self.log(loss, ads[-1].lower_bounds)
             loss.backward()
             optimizer.step()
+            scheduler.step(loss)
 
             for lambdas_layer in self.lambdas:
                 lambdas_layer.data = torch.clamp(lambdas_layer.data, 0.0, 1.0)
