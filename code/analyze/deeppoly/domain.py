@@ -92,6 +92,7 @@ class AbstractDomain:
         assert norm.lower().strip() == "linf", f"{norm} norm is not supported"
         u = inputs + epsilon
         l = inputs - epsilon
+
         if clamp:
             u = torch.clamp(u, domain_bounds[0], domain_bounds[1])
             l = torch.clamp(l, domain_bounds[0], domain_bounds[1])

@@ -27,11 +27,11 @@ class RobustnessProperty:
     @staticmethod
     def _create_transformer(nb_labels, true_label):
         layer = torch.nn.Linear(nb_labels, nb_labels - 1, False)
-        weights = torch.zeros((nb_labels - 1, nb_labels))
+        weights = torch.zeros((nb_labels, nb_labels))
         weights.fill_diagonal_(-1)
         weights[:, true_label] = 1
-        if true_label < nb_labels - 1:
-            weights[true_label, -1] = -1
+        row_mask = torch.arange(0, nb_labels) != true_label
+        weights = weights[row_mask, :]
         layer.weight = torch.nn.Parameter(weights)
         return TransformerFactory.create(layer, backsubstitution=True)
 

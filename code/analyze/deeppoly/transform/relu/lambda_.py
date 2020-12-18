@@ -53,3 +53,14 @@ class Matrix(LambdaCalculator):
 
     def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
         return self._lambdas[layer_id][mask]
+
+
+class Map(LambdaCalculator):
+
+    def __init__(self, lambdas, mapping):
+        self._lambdas = lambdas
+        self._mapping = mapping
+
+    def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
+        ids = self._mapping[layer_id][mask]
+        return self._lambdas[layer_id][ids]

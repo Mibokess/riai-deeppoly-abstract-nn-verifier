@@ -7,9 +7,9 @@ INPUT_SIZE = 28
 
 
 
-def analyze(net, inputs, eps, true_label):
+def analyze(name, net, inputs, eps, true_label):
     from analyze.deeppoly import analyzer
-    heuristic = HeuristicFactory(net, inputs, true_label).create()
+    heuristic = HeuristicFactory(name, net, inputs, true_label).create()
     dp = analyzer.DeepPoly(heuristic)
     res, *_ = dp.verify(net, inputs, eps, true_label)
     return res
@@ -53,7 +53,7 @@ def main(net, spec, verbose=True):
     pred_label = outs.max(dim=1)[1].item()
     assert pred_label == true_label
 
-    res = analyze(nn, inputs, eps, true_label)
+    res = analyze(net, nn, inputs, eps, true_label)
     out = "verified" if res else 'not verified'
     if verbose:
         print(out)
