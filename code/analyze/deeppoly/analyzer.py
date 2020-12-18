@@ -30,6 +30,8 @@ class RobustnessProperty:
         weights = torch.zeros((nb_labels - 1, nb_labels))
         weights.fill_diagonal_(-1)
         weights[:, true_label] = 1
+        if true_label < nb_labels - 1:
+            weights[true_label, -1] = -1
         layer.weight = torch.nn.Parameter(weights)
         return TransformerFactory.create(layer, backsubstitution=True)
 

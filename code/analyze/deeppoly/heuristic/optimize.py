@@ -62,18 +62,15 @@ class Optimize(Heuristic):
                 return verified, ads, steps
 
             loss = self.loss_fn(ads[-1].lower_bounds)
+            #self.debug= True
             self.log(loss, ads[-1].lower_bounds)
             loss.backward()
             optimizer.step()
-            # with torch.no_grad():
-            #    self.clamp_lambbas()
+
+            for lambdas_layer in self.lambdas:
+                lambdas_layer.data = torch.clamp(lambdas_layer.data, 0.0, 1.0)
 
         return verified, ads, steps
-
-
-    def clamp_lambbas(self):
-        for lambdas in self.lambdas:
-            lambdas.clamp_(0.0, 1.0)
 
 
     def log(self, loss, lower_bounds):
