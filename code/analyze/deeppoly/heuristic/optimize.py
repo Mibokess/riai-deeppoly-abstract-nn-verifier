@@ -49,11 +49,14 @@ class Optimize(Heuristic):
         verified = False
         ads, steps = None, None
 
-        optimizer = torch.optim.SGD(self.lambdas, lr=0.05, momentum=0.0, weight_decay=0.0, nesterov=False)
+        optimizer = torch.optim.SGD(self.lambdas, lr=0.1, momentum=0.0, weight_decay=0.0, nesterov=False)
         matrix = Matrix(self.lambdas)
         deeppoly.set_lambda_calculator(matrix)
 
-        while not self.timeout():
+        best_loss = float("inf")
+        steps_since_improvement = 0
+
+        while not False:
             optimizer.zero_grad()
 
             verified, ads, steps = deeppoly.forward()
@@ -69,6 +72,15 @@ class Optimize(Heuristic):
 
             for lambdas_layer in self.lambdas:
                 lambdas_layer.data = torch.clamp(lambdas_layer.data, 0.0, 1.0)
+
+            if loss >= best_loss:
+                steps_since_improvement += 1
+            else:
+                best_loss = loss
+                steps_since_improvement = 0
+
+            if steps_since_improvement > 30:
+                return verified, ads, steps
 
         return verified, ads, steps
 
