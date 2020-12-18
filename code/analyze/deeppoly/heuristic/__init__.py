@@ -24,7 +24,7 @@ class Heuristic(ABC):
     def remaining_time(self):
         if self._timeout is None:
             return None
-        return self._timer.elapsed_time() - self._timeout
+        return self._timeout - self._timer.elapsed_time()
 
     def timeout(self):
         return False if self._timeout is None else self._timer.elapsed_time() > self._timeout
@@ -103,7 +103,7 @@ class Loop(Sequential):
 
 class AdHocBackSubstitution(Heuristic):
 
-    def __init__(self, heuristic, layer_ids=None, timeout=None):
+    def __init__(self, heuristic, layer_ids=None, timeout=None, debug=False):
         """
             runs deeppoly with backsubstitution to each given layer_id
             :param layer_ids when set to None, the layers before the relu layers will be used
@@ -111,6 +111,7 @@ class AdHocBackSubstitution(Heuristic):
         super().__init__(timeout)
         self._layer_ids = layer_ids
         self._heuristic = heuristic
+        self.debug = debug
 
     def _run(self, deeppoly):
         verified, ads, steps = False, [], []
@@ -120,6 +121,8 @@ class AdHocBackSubstitution(Heuristic):
             ids = [0] + list(map(lambda id: id - 1, relu_ids))
 
         for id in ids:
+            if self.debug:
+                print(f"running deep poly with backsubstitution to layer {id}")
             if id < deeppoly.get_nb_layers():
                 deeppoly.set_backsubstitution_to(id)
                 self._heuristic.update_timeout(self.remaining_time())
