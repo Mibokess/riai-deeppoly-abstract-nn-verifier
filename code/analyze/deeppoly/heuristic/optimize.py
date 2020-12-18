@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import time
 
-from analyze.deeppoly.transform.relu.lambda_ import Matrix
+from analyze.deeppoly.transform.relu.lambda_ import Matrix, Map
 from analyze.deeppoly.heuristic import Heuristic
 
 
@@ -83,7 +83,7 @@ class Optimize(Heuristic):
                 best_loss = loss
                 steps_since_improvement = 0
 
-            if steps_since_improvement > 10000:
+            if steps_since_improvement > 500:
                 return verified, ads, steps
 
         return verified, ads, steps
