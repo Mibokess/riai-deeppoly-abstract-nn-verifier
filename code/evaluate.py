@@ -95,6 +95,8 @@ class Evaluator:
 if __name__ == '__main__':
     e = Evaluator(glob.glob(f"../*test_cases/"))
     # e.test_fc()
-    e.test("fc7")
+    # e.test("fc4")
+    # e.test("fc5")
+    # e.test("conv1")
     # e.test_conv2d()
-    # e.test_all()
+    e.test_all()

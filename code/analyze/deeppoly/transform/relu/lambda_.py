@@ -52,4 +52,15 @@ class Matrix(LambdaCalculator):
         self._lambdas = lambdas
 
     def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
-        return torch.clamp(self._lambdas[layer_id][mask], 0.0, 1.0)
+        return self._lambdas[layer_id][mask]
+
+
+class Map(LambdaCalculator):
+
+    def __init__(self, lambdas, mapping):
+        self._lambdas = lambdas
+        self._mapping = mapping
+
+    def compute_lambda(self, layer_id, mask, lower_bounds, upper_bounds):
+        ids = self._mapping[layer_id][mask]
+        return self._lambdas[layer_id][ids]

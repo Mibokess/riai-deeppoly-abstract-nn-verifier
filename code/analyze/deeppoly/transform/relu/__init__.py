@@ -48,10 +48,9 @@ class ReluTransformer(Transformer):
 
         relu_lower_than.A[relu_mask, relu_mask] *= lambda_low[:, 0]
 
-        # ad_relu.lower_than.compute_bounds(input.lower_bounds, input.upper_bounds)
-        # ad_relu.upper_bounds = ad_relu.greater_than.compute_bounds(input.lower_bounds, input.upper_bounds)
+        lower_bounds = relu_lower_than.compute_bounds(ad.lower_bounds, ad.upper_bounds)
+        upper_bounds = relu_greater_than.compute_bounds(ad.lower_bounds, ad.upper_bounds)
 
-        lower_bounds, upper_bounds = self.compute_bounds(ads, relu_lower_than, relu_greater_than)
         ad_relu = AbstractDomain(lower_bounds, upper_bounds, relu_lower_than, relu_greater_than, ad.output_shape)
 
         return ad_relu
